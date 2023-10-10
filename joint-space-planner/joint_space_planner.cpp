@@ -123,8 +123,6 @@ int main()
     while (1)
     {
 
-            // std::cout<<"start_pos 0 : "<<force_dim_ptr[0]<<", start_pos 1 : "<<force_dim_ptr[1]<<", stgart_pos 2 : "<<force_dim_ptr[2]<<std::endl;
-
         if (!in_operation_ && system_data_ptr->request != 0)
         {
             changeSystemState();
@@ -205,43 +203,17 @@ int main()
     }
 
     return 0;
-    // while (!ptrTxPDO[0])
-    // {
-    // }
+}
 
-    // sleep(3.0);
+int write_to_drive(double joint_pos[3], double joint_vel[3])
+{
+    for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+    {
+        ptrSimRobot[jnt_ctr] = joint_pos[jnt_ctr];
+        robot_state_ptr->joint_position[jnt_ctr] = joint_pos[jnt_ctr];
+    }
 
-    // double start_pos[6] = {0};
-
-    // double ini_pos[6] = {-1.57, -0.386755, 1.57, 0, 0.418, -1.57};
-
-    // // double ini_pos[6] = {0, 0, 0, -1.57, 1.57, -1.57};
-    // double final_pos[6] = {0, 0.75, 0, 0, -1.57, 1.57};
-
-    // ptrRxPDO[42] = 1;
-
-    // std::cout<<"line 81"<<std::endl;
-
-    // pt_to_pt_mvmt(start_pos, ini_pos);
-
-    // // sleep(1);
-
-    // std::cout<<"line 87"<<std::endl;
-
-    // pt_to_pt_mvmt(ini_pos, final_pos);
-
-    // std::cout<<"line 91"<<std::endl;
-    // pt_to_pt_mvmt(final_pos, ini_pos);
-    // std::cout<<"line 93"<<std::endl;
-
-    // pt_to_pt_mvmt(ini_pos, final_pos);
-    // pt_to_pt_mvmt(final_pos, ini_pos);
-    // // pt_to_pt_mvmt(ini_pos, final_pos);
-    // // pt_to_pt_mvmt(final_pos, ini_pos);
-    // // pt_to_pt_mvmt(ini_pos, final_pos);
-    // // pt_to_pt_mvmt(final_pos, ini_pos);
-
-    // ptrRxPDO[42] = 0;
+    return 0;
 }
 
 int changeSystemState()
@@ -370,73 +342,17 @@ double hand_control_jog(double start_pos[3], Eigen::Vector3d& eef_pos, Eigen::Ma
     write_to_drive(command_pos, command_vel);
     usleep(1000);
 
-}
-
-int conv_radians_to_count(double rad, int joint_num)
-{
-    if (joint_num < 3)
-    {
-        return (int)(524288 * rad / (2 * M_PI));
-    }
-    else
-    {
-        return (int)(262144 * rad / (2 * M_PI));
-    }
-}
-
-double conv_count_to_rad(double count, int joint_num)
-{
-    if (joint_num < 3)
-    {
-        return (count / 524288 * (2 * M_PI));
-    }
-    else
-    {
-        return (count / 262144 * (2 * M_PI));
-    }
-}
-
-int conv_rad_to_mrpm(double rad_sec, int joint_num)
-{
-    if (joint_num < 3)
-    {
-        return (rad_sec * 60 / (2 * M_PI) * 1000);
-    }
-    else
-    {
-        return (rad_sec * 60 / (2 * M_PI) * 1000);
-    }
-}
-
-int write_to_drive(double joint_pos[6], double joint_vel[6])
-{
-    for (unsigned int jnt_ctr = 0; jnt_ctr < 6; jnt_ctr++)
-    {
-        // // std::cout << " conv_radians_to_count(joint_pos[jnt_ctr], jnt_ctr): " << conv_radians_to_count(joint_pos[jnt_ctr], jnt_ctr) << std::endl;
-        // ptrRxPDO[18 + jnt_ctr] = conv_radians_to_count(joint_pos[jnt_ctr], jnt_ctr);
-        // ptrRxPDO[36 + jnt_ctr] = conv_rad_to_mrpm(joint_vel[jnt_ctr], jnt_ctr);
-        ptrSimRobot[jnt_ctr] = joint_pos[jnt_ctr];
-        robot_state_ptr->joint_position[jnt_ctr] = joint_pos[jnt_ctr];
-        // ptrTxPDO[13 + jnt_ctr] = conv_radians_to_count(joint_pos[jnt_ctr], jnt_ctr);
-        // ptrTxPDO[19 + jnt_ctr] = conv_rad_to_mrpm(joint_vel[jnt_ctr], jnt_ctr);
-    }
-
     return 0;
+
 }
 
-int pt_to_pt_mvmt(double ini_pos[6], double final_pos[6])
+int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
 {
 
-    int num_joints = 6;
+    int num_joints = 3;
 
-    // double joint_vel[6] = {0.5, 0.5, 0.5, 1.0, 1.0, 1.0};
-    // double joint_acc[6] = {0.5, 0.5, 0.5, 1.0, 1.0, 1.0};
-
-    double joint_vel[6] = {0.5, 0.5, 0.5, 1.0, 1.0, 1.0};
-    double joint_acc[6] = {0.5, 0.5, 0.5, 1.0, 1.0, 1.0};
-
-    // double joint_vel[6] = {0.1, 0.1, 0.1, 0.2, 0.2, 0.2};
-    // double joint_acc[6] = {0.3, 0.3, 0.3, 0.6, 0.6, 0.6};
+    double joint_vel[3] = {0.5, 0.5, 0.5};
+    double joint_acc[3] = {0.5, 0.5, 0.5};
 
     // taking care of vel and acceleration sign
     for (int jnt_ctr = 0; jnt_ctr < num_joints; jnt_ctr++)
@@ -512,9 +428,9 @@ int pt_to_pt_mvmt(double ini_pos[6], double final_pos[6])
     }
 
     double t = 0;
-    double current_pos[6] = {0};
-    double current_vel[6] = {0};
-    double current_acc[6] = {0};
+    double current_pos[3] = {0};
+    double current_vel[3] = {0};
+    double current_acc[3] = {0};
 
     // std::cout << "max_time : " << max_time << std::endl;
 

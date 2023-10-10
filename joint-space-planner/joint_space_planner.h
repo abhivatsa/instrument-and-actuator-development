@@ -6,13 +6,26 @@
 #include "MotionPlanning/IK6AxisInline.h"
 #include "MotionPlanning/Jacobian.h"
 
-int conv_radians_to_count(double rad, int joint_num);
 
-double conv_count_to_rad(double count, int joint_num);
 
-int write_to_drive(double joint_pos[6], double joint_vel[6]);
+int write_to_drive(double joint_pos[3], double joint_vel[3]);
 
-int pt_to_pt_mvmt(double ini_pos[6], double final_pos[6]);
+int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3]);
+
+int conv_radians_to_count(double rad, int joint_num)
+{
+    return (int)(262144 * rad / (2 * M_PI));
+}
+
+double conv_count_to_rad(double count, int joint_num)
+{
+    return (count / 262144 * (2 * M_PI));
+}
+
+int conv_rad_to_mrpm(double rad_sec, int joint_num)
+{
+    return (rad_sec * 60 / (2 * M_PI) * 1000);
+}
 
 int changeSystemState();
 
@@ -39,6 +52,30 @@ enum CommandType{
     MOVE_TO
 };
 
+struct JointData
+{
+
+    void setZero()
+    {
+        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+        {
+            joint_position[jnt_ctr] = 0;
+            joint_velocity[jnt_ctr] = 0;
+            joint_torque[jnt_ctr] = 0;
+            target_position[jnt_ctr] = 0;
+            target_velocity[jnt_ctr] = 0;
+            target_torque[jnt_ctr] = 0;
+        }
+    }
+
+    double joint_position[3];
+    double joint_velocity[3];
+    double joint_torque[3];
+    double target_position[3];
+    double target_velocity[3];
+    double target_torque[3];
+};
+
 struct SystemData
 {
     SystemState getSystemState() const {return system_state;}
@@ -54,7 +91,7 @@ struct RobotState
 {
     void setZero()
     {
-        for(int i = 0; i < 6; i++)
+        for (int i = 0; i < 3; i++)
         {
             joint_position[i] = 0;
             cart_position[i] = 0;
@@ -62,10 +99,10 @@ struct RobotState
             joint_torque[i] = 0;
         }
     }
-    double cart_position[6];
-    double joint_position[6];
-    double joint_velocity[6];
-    double joint_torque[6];
+    double cart_position[3];
+    double joint_position[3];
+    double joint_velocity[3];
+    double joint_torque[3];
 };
 
 struct CommandData
@@ -73,13 +110,19 @@ struct CommandData
     void setJog(int index, int dir, int mode)
     {
         this->type = CommandType::JOG;
-        jog_data.index = index;
+        jog_data.index = index - 1;
         jog_data.dir = dir;
         jog_data.type = mode;
     }
-    void setMoveTo(double goal[6], int type)
+    void setHandControl(){
+        this->type = CommandType::HAND_CONTROL;
+    }
+    void setGravity(){
+        this->type = CommandType::GRAVITY;
+    }
+    void setMoveTo(double goal[3], int type)
     {
-        for(int i = 0; i < 6; i ++)
+        for (int i = 0; i < 3; i++)
         {
             move_to_data.goal_position[i] = goal[i];
         }
@@ -87,13 +130,15 @@ struct CommandData
         this->type = CommandType::MOVE_TO;
     }
     CommandType type;
-    struct{
+    struct
+    {
         int index;
         int dir;
         int type;
     } jog_data;
-    struct{
+    struct
+    {
         int type;
-        double goal_position[6];
+        double goal_position[3];
     } move_to_data;
 };

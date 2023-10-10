@@ -49,8 +49,8 @@
 
 
 #define DOMAIN1_POSITION 0
-#define DOMAIN1_START 0
-#define DOMAIN1_END 6
+#define DOMAIN1_START 1
+#define DOMAIN1_END 4
 
 /****************************************************************************/
 #define CLOCK_TO_USE CLOCK_MONOTONIC
@@ -73,7 +73,7 @@
 #define NSEC_PER_SEC (1000000000)
 #define FREQUENCY (NSEC_PER_SEC / PERIOD_NS)
 
-bool operation_enable_status[6] = {true, true, false, false, true, true};
+bool operation_enable_status[3] = {true, true, false};
 
 /****************************************************************************/
 
@@ -92,9 +92,9 @@ static unsigned int counter = 1;
 static unsigned int sync_ref_counter = 0;
 const struct timespec cycletime = {0, PERIOD_NS};
 
-#define synapticon_circulo 0x000022d2, 0x00000301 // Vendor Id, Product Code
+#define ingenia_denalli_xcr 0x0000029c, 0x03831002 // Vendor Id, Product Code
 
-bool drive_switched_on[6] = {false, false, false, false, false, false};
+bool drive_switched_on[3] = {false, false, false};
 bool all_drive_enabled = false;
 
 struct joint_pdos
@@ -113,44 +113,27 @@ struct joint_pdos
     unsigned int target_velocity;
     unsigned int torque_offset;
     unsigned int velocity_offset;
-    unsigned int digital_physical_output;
-    unsigned int digital_output_bit_mask;
-    unsigned int gpio_global_option;
-    unsigned int led_colour;
-} drive_offset[6];
+} drive_offset[3];
 
 int conv_radians_to_count(double rad, int joint_num)
 {
-    if (joint_num < 3)
-    {
-        return (int)(524288 * rad / (2 * M_PI));
-    }
-    else
-    {
-        return (int)(262144 * rad / (2 * M_PI));
-    }
+    return (int)(4096 * 50 *rad / (2 * M_PI));
 }
 
 double conv_count_to_rad(int count, int joint_num)
 {
-    if (joint_num < 3)
-    {
-        return (count / 524288 * (2 * M_PI));
-    }
-    else
-    {
-        return (count / 262144 * (2 * M_PI));
-    }
+    return (count / (4096 * 50) * (2 * M_PI));
 }
 
-int conv_rad_sec_to_rpm(double rad_sec, int joint_num)
+// Needs to be checked from Drive Side for Unit and Formula also not correct
+int conv_rad_sec_to_mrev_sec(double rad_sec, int joint_num)
 {
-    return (rad_sec * 60 / (2 * M_PI));
+    return (rad_sec  / (2 * M_PI));
 }
 
-double conv_rpm_to_rad_sec(int rpm, int joint_num)
+double conv_mrev_sec_to_rad_sec(int mrev_sec, int joint_num)
 {
-    return (2 * M_PI * rpm / 60);
+    return (2 * M_PI * mrev_sec / 1000);
 }
 
 

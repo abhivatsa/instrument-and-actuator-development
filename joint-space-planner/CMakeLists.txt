@@ -1,4 +1,4 @@
-project(motion_plannner_project)
+project(joint_space_planner)
 
 cmake_minimum_required(VERSION 3.0)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lrt")

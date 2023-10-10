@@ -126,7 +126,7 @@ struct CommandData
     struct
     {
         int type;
-        double goal_position[6];
+        double goal_position[3];
     } move_to_data;
 };
 

@@ -11,7 +11,7 @@ struct JointData
 
     void setZero()
     {
-        for (int jnt_ctr = 0; jnt_ctr < 6; jnt_ctr++)
+        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
             joint_position[jnt_ctr] = 0;
             joint_velocity[jnt_ctr] = 0;
@@ -22,12 +22,12 @@ struct JointData
         }
     }
 
-    double joint_position[6];
-    double joint_velocity[6];
-    double joint_torque[6];
-    double target_position[6];
-    double target_velocity[6];
-    double target_torque[6];
+    double joint_position[3];
+    double joint_velocity[3];
+    double joint_torque[3];
+    double target_position[3];
+    double target_velocity[3];
+    double target_torque[3];
 };
 
 enum DriveState
@@ -54,7 +54,7 @@ struct SystemStateData
         ready_for_operation = false;
         safety_check_done = false;
         start_safety_check = false;
-        for (int jnt_ctr = 0; jnt_ctr < 6; jnt_ctr++){
+        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++){
             drive_enable_for_operation[jnt_ctr] = false;
         }
     }
@@ -68,12 +68,13 @@ struct SystemStateData
     bool trigger_operation_enabled; // Done From UI to enable motors
     bool start_safety_check;
     bool ready_for_operation;
-    bool drive_enable_for_operation[6];
+    bool drive_enable_for_operation[3];
 
     bool safety_check_done;
 };
 
 JointData *joint_data_ptr;
 SystemStateData *system_state_data_ptr; 
+JointData *app_joint_data_ptr;
 
 int pos_limit_check(double* joint_pos);
