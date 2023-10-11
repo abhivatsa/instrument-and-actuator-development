@@ -46,6 +46,12 @@ enum DriveState
     ERROR,
 };
 
+enum OperationModeState{
+    POSITION_MODE = 8,
+    VELOCITY_MODE = 9,
+    TORQUE_MODE = 10,
+};
+
 struct SystemStateData
 {
     void setZero(){
@@ -53,9 +59,8 @@ struct SystemStateData
 
         status_switched_on = false;
         status_operation_enabled = false;
-        safety_controller_enabled =  false;
+        safety_controller_enabled = false;
         trigger_error_mode = false;
-        trigger_operation_enabled = false;
         ready_for_operation = false;
         safety_check_done = false;
         start_safety_check = false;
@@ -65,17 +70,24 @@ struct SystemStateData
     }
 
     DriveState current_state;
-
-    bool status_switched_on;
+    OperationModeState drive_operation_mode;
+    // Variables for Drive status
+    bool status_switched_on; 
     bool status_operation_enabled;
-    bool safety_controller_enabled; // 
+
+    // To determine where safety Code started Running
+    bool safety_controller_enabled; 
+
+    // both Variables ghas to Come from Safety Code
     bool trigger_error_mode;   // Chaged from safety controller 
-    bool trigger_operation_enabled; // Done From UI to enable motors
+    
+    // Variables to initialize and check the status of safety code at 1000Hz
     bool start_safety_check;
+    bool safety_check_done;
+
+    
     bool ready_for_operation;
     bool drive_enable_for_operation[3];
-
-    bool safety_check_done;
 };
 
 JointData *joint_data_ptr;

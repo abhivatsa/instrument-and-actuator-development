@@ -115,25 +115,34 @@ struct joint_pdos
     unsigned int velocity_offset;
 } drive_offset[3];
 
-int conv_radians_to_count(double rad, int joint_num)
+double gear_ratio = 50;
+double rated_torque = 0.02;
+double enc_count = 4096;
+
+int conv_radians_to_count(double rad)
 {
-    return (int)(4096 * 50 *rad / (2 * M_PI));
+    return (int) (enc_count * gear_ratio *rad / (2 * M_PI));
 }
 
-double conv_count_to_rad(int count, int joint_num)
+double conv_count_to_rad(int count)
 {
-    return (count / (4096 * 50) * (2 * M_PI));
+    return (count / (enc_count * gear_ratio) * (2 * M_PI));
 }
 
 // Needs to be checked from Drive Side for Unit and Formula also not correct
-int conv_rad_sec_to_mrev_sec(double rad_sec, int joint_num)
+int conv_rad_sec_to_mrev_sec(double rad_sec)
 {
     return (rad_sec  / (2 * M_PI));
 }
 
-double conv_mrev_sec_to_rad_sec(int mrev_sec, int joint_num)
+double conv_mrev_sec_to_rad_sec(int mrev_sec)
 {
     return (2 * M_PI * mrev_sec / 1000);
+}
+
+double conv_to_actual_torque(int torq_val)
+{
+    return (torq_val / 1000 * rated_torque * gear_ratio);
 }
 
 

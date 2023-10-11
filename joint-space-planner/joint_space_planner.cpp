@@ -10,12 +10,7 @@
 #include <sys/time.h>
 
 using namespace std;
-int *ptrRxPDO, *ptrTxPDO;
-double *ptrSimRobot;
 
-SystemData *system_data_ptr;
-RobotState *robot_state_ptr;
-CommandData *commmand_data_ptr;
 /* pointer to shared memory object */
 double *force_dim_ptr;
 motion_planning::ForwardKinematics fk_solver;
@@ -26,61 +21,28 @@ int main()
 {
 
     /* the size (in bytes) of shared memory object */
-    const int SIZE_RxPDO = sizeof(int[48]);
     const int SIZE_SysData = sizeof(SystemData);
-    const int SIZE_RobState = sizeof(RobotState);
+    const int SIZE_AppData = sizeof(AppData);
     const int SIZE_ComData = sizeof(CommandData);
 
     /* shared memory file descriptor */
-    int shm_fd_RxPDO;
     int shm_fd_SysData;
-    double shm_fd_robState;
+    double shm_fd_AppData;
     double shm_fd_ComData;
 
     /* open the shared memory object */
-    shm_fd_RxPDO = shm_open("ethercat_RxPDO", O_CREAT | O_RDWR, 0666);
     shm_fd_SysData = shm_open("SysData", O_CREAT | O_RDWR, 0666);
-    shm_fd_robState = shm_open("RobState", O_CREAT | O_RDWR, 0666);
+    shm_fd_AppData = shm_open("AppData", O_CREAT | O_RDWR, 0666);
     shm_fd_ComData = shm_open("ComData", O_CREAT | O_RDWR, 0666);
 
-    ftruncate(shm_fd_RxPDO, SIZE_RxPDO);
     ftruncate(shm_fd_SysData, SIZE_SysData);
-    ftruncate(shm_fd_robState, SIZE_RobState);
+    ftruncate(shm_fd_AppData, SIZE_AppData);
     ftruncate(shm_fd_ComData, SIZE_ComData);
 
     /* memory map the shared memory object */
-    ptrRxPDO = static_cast<int *>(mmap(0, SIZE_RxPDO, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_RxPDO, 0));
     system_data_ptr = static_cast<SystemData *>(mmap(0, SIZE_SysData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SysData, 0));
-    robot_state_ptr = static_cast<RobotState *>(mmap(0, SIZE_RobState, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_robState, 0));
+    app_data_ptr = static_cast<AppData *>(mmap(0, SIZE_AppData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_AppData, 0));
     commmand_data_ptr = static_cast<CommandData *>(mmap(0, SIZE_ComData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_ComData, 0));
-
-    /* the size (in bytes) of shared memory object */
-    const int SIZE_TxPDO = sizeof(int[43]);
-
-    /* shared memory file descriptor */
-    int shm_fd_TxPDO;
-
-    /* open the shared memory object */
-    shm_fd_TxPDO = shm_open("ethercat_TxPDO", O_CREAT | O_RDWR, 0666);
-
-    ftruncate(shm_fd_TxPDO, SIZE_TxPDO);
-
-    /* memory map the shared memory object */
-    ptrTxPDO = static_cast<int *>(mmap(0, SIZE_TxPDO, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_TxPDO, 0));
-
-    /* the size (in bytes) of shared memory object */
-    const int SIZE_SimRobot = sizeof(double[6]);
-
-    /* shared memory file descriptor */
-    double shm_fd_SimRobot;
-
-    /* open the shared memory object */
-    shm_fd_SimRobot = shm_open("SimRobot", O_CREAT | O_RDWR, 0666);
-
-    ftruncate(shm_fd_SimRobot, SIZE_SimRobot);
-
-    /* memory map the shared memory object */
-    ptrSimRobot = static_cast<double *>(mmap(0, SIZE_SimRobot, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SimRobot, 0));
 
     /* the size (in bytes) of shared memory object */
     const double FORCE_DIM_SIZE = sizeof(double[20]);
@@ -104,14 +66,10 @@ int main()
 
     std::cout<<"start_pos 0 : "<<start_pos[0]<<", start_pos 1 : "<<start_pos[1]<<", stgart_pos 2 : "<<start_pos[2]<<std::endl;
 
-    std::cout << ptrSimRobot[0] << "\n";
-
-    ptrTxPDO[0] = 1;
-
     bool in_operation_ = false;
     system_data_ptr->setSystemState(SystemState::POWER_OFF);
     system_data_ptr->request = 0;
-    robot_state_ptr->setZero();
+    app_data_ptr->setZero();
     commmand_data_ptr->type = CommandType::NONE;
 
     Eigen::MatrixXd trans_mat;
@@ -136,6 +94,7 @@ int main()
 
                 if (commmand_data_ptr->type == CommandType::JOG)
                 {
+                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     while (commmand_data_ptr->jog_data.type == 0)
                         jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 0);
 
@@ -148,12 +107,13 @@ int main()
                 {
                     /* code */
                     std::cout << "Hand Control Enabled \n";
+                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     if (!hand_Controller_switch){
 
                         std::vector<double> current_pos, desired_pos;
                         current_pos.resize(6);
                         desired_pos.resize(6);
-                        std::copy(std::begin(robot_state_ptr->joint_position), std::end(robot_state_ptr->joint_position), std::begin(current_pos));
+                        std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
 
                         
                         trans_mat.resize(4, 4);
@@ -176,18 +136,25 @@ int main()
                     }
                     
                 }
-                else if (commmand_data_ptr->type == CommandType::GRAVITY)
+                else if (commmand_data_ptr->type == CommandType::STERILE_ENGAGEMENT)
                 {
+                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
+                    /* code */
+                }
+                else if (commmand_data_ptr->type == CommandType::INSTRUMENT_ENGAGEMENT)
+                {
+                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     /* code */
                 }
                 else
                 {
+                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     in_operation_ = true;
                     system_data_ptr->setSystemState(SystemState::IN_EXECUTION);
                     // move point to point
                     double init_pos[6];
                     double final_pos[6];
-                    std::copy(std::begin(robot_state_ptr->joint_position), std::end(robot_state_ptr->joint_position), std::begin(init_pos));
+                    std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(init_pos));
                     std::copy(std::begin(commmand_data_ptr->move_to_data.goal_position), std::end(commmand_data_ptr->move_to_data.goal_position), std::begin(final_pos));
                     pt_to_pt_mvmt(init_pos, final_pos);
 
@@ -209,8 +176,7 @@ int write_to_drive(double joint_pos[3], double joint_vel[3])
 {
     for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
     {
-        ptrSimRobot[jnt_ctr] = joint_pos[jnt_ctr];
-        robot_state_ptr->joint_position[jnt_ctr] = joint_pos[jnt_ctr];
+        app_data_ptr->target_position[jnt_ctr] = joint_pos[jnt_ctr];
     }
 
     return 0;
@@ -241,9 +207,9 @@ double jog(int index, int dir, int type)
     if (type == 0) // joint space
     {
         /* code */
-        double command_pos[6];
-        double command_vel[6] = {0, 0, 0, 0, 0, 0};
-        std::copy(std::begin(robot_state_ptr->joint_position), std::end(robot_state_ptr->joint_position), std::begin(command_pos));
+        double command_pos[3];
+        double command_vel[3] = {0, 0, 0};
+        std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(command_pos));
         command_pos[index] = command_pos[index] + dir * 0.001;
         write_to_drive(command_pos, command_vel);
         usleep(1000);
@@ -254,7 +220,7 @@ double jog(int index, int dir, int type)
         std::vector<double> current_pos, desired_pos;
         current_pos.resize(6);
         desired_pos.resize(6);
-        std::copy(std::begin(robot_state_ptr->joint_position), std::end(robot_state_ptr->joint_position), std::begin(current_pos));
+        std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
 
         Eigen::MatrixXd trans_mat;
         trans_mat.resize(4, 4);
@@ -317,7 +283,7 @@ double hand_control_jog(double start_pos[3], Eigen::Vector3d& eef_pos, Eigen::Ma
     std::vector<double> current_pos, desired_pos;
     current_pos.resize(6);
     desired_pos.resize(6);
-    std::copy(std::begin(robot_state_ptr->joint_position), std::end(robot_state_ptr->joint_position), std::begin(current_pos));
+    std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
 
 
     Eigen::Vector3d eef_pos_new;

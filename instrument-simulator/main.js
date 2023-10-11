@@ -297,14 +297,15 @@ document.addEventListener('DOMContentLoaded', handler)
 const input_control_tab = document.getElementById("inputControl");
 
 // Input sliders
-const teachMode = document.getElementById("teachMode");
+const sterileEngagementMode = document.getElementById("sterileEngagement");
+const instrumentEngagementMode = document.getElementById("instrumentEngagement");
 const handControllerMode = document.getElementById("handController");
 const simulationMode = document.getElementById("simulationMode");
 const powerBtn = document.getElementById("powerOnMode");
 const jogButtons = document.getElementsByClassName("jog");
 
 
-var buttons = [teachMode, handControllerMode, simulationMode];
+var buttons = [sterileEngagementMode, instrumentEngagementMode, handControllerMode, simulationMode];
 
 // joint values
 var joint_val_1 = document.getElementById("joint_val_1");
@@ -339,7 +340,8 @@ const systemStateSpinner = document.getElementById("systemStateSpinner");
 // enable disble the buttons
 function enableButtons(state) 
 {
-    teachMode.disabled = !state;
+    sterileEngagementMode.disabled = !state;
+    instrumentEngagementMode.disabled = !state;
     handControllerMode.disabled = !state;
     simulationMode.disabled = !state;
 

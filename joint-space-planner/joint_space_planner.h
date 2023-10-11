@@ -12,21 +12,6 @@ int write_to_drive(double joint_pos[3], double joint_vel[3]);
 
 int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3]);
 
-int conv_radians_to_count(double rad, int joint_num)
-{
-    return (int)(262144 * rad / (2 * M_PI));
-}
-
-double conv_count_to_rad(double count, int joint_num)
-{
-    return (count / 262144 * (2 * M_PI));
-}
-
-int conv_rad_to_mrpm(double rad_sec, int joint_num)
-{
-    return (rad_sec * 60 / (2 * M_PI) * 1000);
-}
-
 int changeSystemState();
 
 double jog(int index, int dir, int type);
@@ -48,32 +33,44 @@ enum CommandType{
     NONE,
     JOG,
     HAND_CONTROL,
-    GRAVITY,
-    MOVE_TO
+    STERILE_ENGAGEMENT,
+    INSTRUMENT_ENGAGEMENT
 };
 
-struct JointData
-{
+enum OperationModeState{
+    POSITION_MODE = 8,
+    VELOCITY_MODE = 9,
+    TORQUE_MODE = 10,
+};
 
+struct AppData
+{
     void setZero()
     {
         for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
-            joint_position[jnt_ctr] = 0;
-            joint_velocity[jnt_ctr] = 0;
-            joint_torque[jnt_ctr] = 0;
+            actual_position[jnt_ctr] = 0;
+            actual_velocity[jnt_ctr] = 0;
+            actual_torque[jnt_ctr] = 0;
+            cart_pos[3] = 0;
             target_position[jnt_ctr] = 0;
             target_velocity[jnt_ctr] = 0;
             target_torque[jnt_ctr] = 0;
+            drive_operation_mode = OperationModeState::POSITION_MODE;
+            switched_on = false;
         }
     }
 
-    double joint_position[3];
-    double joint_velocity[3];
-    double joint_torque[3];
+    double actual_position[3];
+    double actual_velocity[3];
+    double actual_torque[3];
+    double cart_pos[3];
     double target_position[3];
     double target_velocity[3];
     double target_torque[3];
+    OperationModeState drive_operation_mode;
+    bool switched_on;
+
 };
 
 struct SystemData
@@ -85,24 +82,6 @@ struct SystemData
     int request = 0;
 private:
     SystemState system_state = SystemState::POWER_OFF; 
-};
-
-struct RobotState
-{
-    void setZero()
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            joint_position[i] = 0;
-            cart_position[i] = 0;
-            joint_velocity[i] = 0;
-            joint_torque[i] = 0;
-        }
-    }
-    double cart_position[3];
-    double joint_position[3];
-    double joint_velocity[3];
-    double joint_torque[3];
 };
 
 struct CommandData
@@ -117,17 +96,11 @@ struct CommandData
     void setHandControl(){
         this->type = CommandType::HAND_CONTROL;
     }
-    void setGravity(){
-        this->type = CommandType::GRAVITY;
+    void setSterileEngagement(){
+        this->type = CommandType::STERILE_ENGAGEMENT;
     }
-    void setMoveTo(double goal[3], int type)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            move_to_data.goal_position[i] = goal[i];
-        }
-        move_to_data.type = type;
-        this->type = CommandType::MOVE_TO;
+    void setInstrumentEngagement(){
+        this->type = CommandType::INSTRUMENT_ENGAGEMENT;
     }
     CommandType type;
     struct
@@ -142,3 +115,8 @@ struct CommandData
         double goal_position[3];
     } move_to_data;
 };
+
+
+SystemData *system_data_ptr;
+AppData *app_data_ptr;
+CommandData *commmand_data_ptr;

@@ -58,9 +58,16 @@ enum CommandType{
     NONE,
     JOG,
     HAND_CONTROL,
-    GRAVITY,
-    MOVE_TO
+    STERILE_ENGAGEMENT,
+    INSTRUMENT_ENGAGEMENT
 };
+
+enum OperationModeState{
+    POSITION_MODE = 8,
+    VELOCITY_MODE = 9,
+    TORQUE_MODE = 10,
+};
+
 
 struct SystemData
 {
@@ -74,22 +81,34 @@ private:
     SystemState system_state = SystemState::POWER_OFF;
 };
 
-struct RobotState
+struct AppData
 {
     void setZero()
     {
-        for (int i = 0; i < 3; i++)
+        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
-            joint_position[i] = 0;
-            cart_position[i] = 0;
-            joint_velocity[i] = 0;
-            joint_torque[i] = 0;
+            actual_position[jnt_ctr] = 0;
+            actual_velocity[jnt_ctr] = 0;
+            actual_torque[jnt_ctr] = 0;
+            cart_pos[3] = 0;
+            target_position[jnt_ctr] = 0;
+            target_velocity[jnt_ctr] = 0;
+            target_torque[jnt_ctr] = 0;
+            drive_operation_mode = OperationModeState::POSITION_MODE;
+            switched_on = false;
         }
     }
-    double cart_position[3];
-    double joint_position[3];
-    double joint_velocity[3];
-    double joint_torque[3];
+
+    double actual_position[3];
+    double actual_velocity[3];
+    double actual_torque[3];
+    double cart_pos[3];
+    double target_position[3];
+    double target_velocity[3];
+    double target_torque[3];
+    OperationModeState drive_operation_mode;
+    bool switched_on;
+
 };
 
 struct CommandData
@@ -104,17 +123,11 @@ struct CommandData
     void setHandControl(){
         this->type = CommandType::HAND_CONTROL;
     }
-    void setGravity(){
-        this->type = CommandType::GRAVITY;
+    void setSterileEngagement(){
+        this->type = CommandType::STERILE_ENGAGEMENT;
     }
-    void setMoveTo(double goal[3], int type)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            move_to_data.goal_position[i] = goal[i];
-        }
-        move_to_data.type = type;
-        this->type = CommandType::MOVE_TO;
+    void setInstrumentEngagement(){
+        this->type = CommandType::INSTRUMENT_ENGAGEMENT;
     }
     CommandType type;
     struct
@@ -135,7 +148,7 @@ struct CommandData
 double *ptrSimRobot;
 
 SystemData *system_data_ptr;
-RobotState *robot_state_ptr;
+AppData *app_data_ptr;
 CommandData *commmand_data_ptr;
 
 // -------------- Inconming data Parser --------------------
@@ -214,17 +227,16 @@ private:
             commmand_data_ptr->setHandControl();
             break;
         }
-        case CommandType::GRAVITY:
+        case CommandType::STERILE_ENGAGEMENT:
         {
-            std::cout << "Gravity command\n";
-            commmand_data_ptr->setGravity();
+            std::cout << "Sterile Engagement command\n";
+            commmand_data_ptr->setSterileEngagement();
             break;
         }
-        case CommandType::MOVE_TO:
+        case CommandType::INSTRUMENT_ENGAGEMENT:
         {
-            std::cout << "move command\n";
-            double final_pos[3] = {0, 0, 0};
-            commmand_data_ptr->setMoveTo(final_pos, 0);
+            std::cout << "Instrument Engagement command\n";
+            commmand_data_ptr->setInstrumentEngagement();
             break;
         }
         default:
@@ -265,9 +277,9 @@ private:
         for (rapidjson::SizeType jnt_cnt = 0; jnt_cnt < 6; jnt_cnt++)
         {
             std::string name = "joint" + std::to_string(jnt_cnt + 1);
-            position[name.c_str()] = robot_state_ptr->joint_position[jnt_cnt];
-            velocity[name.c_str()] = robot_state_ptr->joint_velocity[jnt_cnt];
-            torque[name.c_str()] = robot_state_ptr->joint_torque[jnt_cnt];
+            position[name.c_str()] = app_data_ptr->actual_position[jnt_cnt];
+            velocity[name.c_str()] = app_data_ptr->actual_velocity[jnt_cnt];
+            torque[name.c_str()] = app_data_ptr->actual_torque[jnt_cnt];
         }
     }
 
@@ -578,43 +590,31 @@ int main(int argc, char *argv[])
     // ptrRxPDO = static_cast<int *>(mmap(0, SIZE_RxPDO, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_RxPDO, 0));
 
     /* the size (in bytes) of shared memory object */
-    const int SIZE_SimRobot = sizeof(double[6]);
     const int SIZE_SimDATA = sizeof(SystemData);
-    const int SIZE_RobState = sizeof(RobotState);
+    const int SIZE_AppData = sizeof(AppData);
     const int SIZE_ComData = sizeof(CommandData);
 
     /* shared memory file descriptor */
-    double shm_fd_SimRobot;
     double shm_fd_SysData;
-    double shm_fd_robState;
+    double shm_fd_AppData;
     double shm_fd_ComData;
 
     /* open the shared memory object */
-    shm_fd_SimRobot = shm_open("SimRobot", O_CREAT | O_RDWR, 0666);
     shm_fd_SysData = shm_open("SysData", O_CREAT | O_RDWR, 0666);
-    shm_fd_robState = shm_open("RobState", O_CREAT | O_RDWR, 0666);
+    shm_fd_AppData = shm_open("AppData", O_CREAT | O_RDWR, 0666);
     shm_fd_ComData = shm_open("ComData", O_CREAT | O_RDWR, 0666);
 
-    ftruncate(shm_fd_SimRobot, SIZE_SimRobot);
     ftruncate(shm_fd_SysData, SIZE_SimDATA);
-    ftruncate(shm_fd_robState, SIZE_RobState);
+    ftruncate(shm_fd_AppData, SIZE_AppData);
     ftruncate(shm_fd_ComData, SIZE_ComData);
 
     /* memory map the shared memory object */
-    ptrSimRobot = static_cast<double *>(mmap(0, SIZE_SimRobot, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SimRobot, 0));
     system_data_ptr = static_cast<SystemData *>(mmap(0, SIZE_SimDATA, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SysData, 0));
-    robot_state_ptr = static_cast<RobotState *>(mmap(0, SIZE_RobState, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_robState, 0));
+    app_data_ptr = static_cast<AppData *>(mmap(0, SIZE_AppData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_AppData, 0));
     commmand_data_ptr = static_cast<CommandData *>(mmap(0, SIZE_ComData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_ComData, 0));
 
-    robot_state_ptr->setZero();
+    app_data_ptr->setZero();
     commmand_data_ptr->type = CommandType::NONE;
-
-    ptrSimRobot[0] = 10;
-    ptrSimRobot[1] = 0;
-    ptrSimRobot[2] = 0;
-    ptrSimRobot[3] = 0;
-    ptrSimRobot[4] = 0;
-    ptrSimRobot[5] = 0;
 
     auto const address = net::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
