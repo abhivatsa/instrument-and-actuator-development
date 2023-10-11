@@ -1,7 +1,7 @@
-CMakeFiles/joint_space_planner.dir/joint_space_planner.cpp.o: \
- /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/joint_space_planner.cpp \
+CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: \
+ /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner/instrument_motion_planner.cpp \
  /usr/include/stdc-predef.h \
- /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/joint_space_planner.h \
+ /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner/instrument_motion_planner.h \
  /usr/include/c++/11/cmath \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

@@ -1,1 +1,0 @@
-/usr/bin/c++  -pthread -lrt -rdynamic CMakeFiles/joint_space_planner.dir/joint_space_planner.cpp.o -o joint_space_planner  -lMotionPlanning 

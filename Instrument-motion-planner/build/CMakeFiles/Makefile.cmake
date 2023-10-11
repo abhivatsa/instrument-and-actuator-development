@@ -121,5 +121,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/joint_space_planner.dir/DependInfo.cmake"
+  "CMakeFiles/instrument_motion_planner.dir/DependInfo.cmake"
   )

@@ -1,3 +1,0 @@
-/home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build/CMakeFiles/joint_space_planner.dir
-/home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build/CMakeFiles/edit_cache.dir
-/home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build/CMakeFiles/rebuild_cache.dir

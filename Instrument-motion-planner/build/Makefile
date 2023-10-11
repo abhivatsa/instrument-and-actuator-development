@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner
+CMAKE_SOURCE_DIR = /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build
+CMAKE_BINARY_DIR = /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build/CMakeFiles /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner/build/CMakeFiles /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-and-actuator-development/joint-space-planner/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/Instrument-motion-planner/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -117,41 +117,41 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named joint_space_planner
+# Target rules for targets named instrument_motion_planner
 
 # Build rule for target.
-joint_space_planner: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 joint_space_planner
-.PHONY : joint_space_planner
+instrument_motion_planner: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 instrument_motion_planner
+.PHONY : instrument_motion_planner
 
 # fast build rule for target.
-joint_space_planner/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/joint_space_planner.dir/build.make CMakeFiles/joint_space_planner.dir/build
-.PHONY : joint_space_planner/fast
+instrument_motion_planner/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/instrument_motion_planner.dir/build.make CMakeFiles/instrument_motion_planner.dir/build
+.PHONY : instrument_motion_planner/fast
 
-joint_space_planner.o: joint_space_planner.cpp.o
-.PHONY : joint_space_planner.o
+instrument_motion_planner.o: instrument_motion_planner.cpp.o
+.PHONY : instrument_motion_planner.o
 
 # target to build an object file
-joint_space_planner.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/joint_space_planner.dir/build.make CMakeFiles/joint_space_planner.dir/joint_space_planner.cpp.o
-.PHONY : joint_space_planner.cpp.o
+instrument_motion_planner.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/instrument_motion_planner.dir/build.make CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o
+.PHONY : instrument_motion_planner.cpp.o
 
-joint_space_planner.i: joint_space_planner.cpp.i
-.PHONY : joint_space_planner.i
+instrument_motion_planner.i: instrument_motion_planner.cpp.i
+.PHONY : instrument_motion_planner.i
 
 # target to preprocess a source file
-joint_space_planner.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/joint_space_planner.dir/build.make CMakeFiles/joint_space_planner.dir/joint_space_planner.cpp.i
-.PHONY : joint_space_planner.cpp.i
+instrument_motion_planner.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/instrument_motion_planner.dir/build.make CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.i
+.PHONY : instrument_motion_planner.cpp.i
 
-joint_space_planner.s: joint_space_planner.cpp.s
-.PHONY : joint_space_planner.s
+instrument_motion_planner.s: instrument_motion_planner.cpp.s
+.PHONY : instrument_motion_planner.s
 
 # target to generate assembly for a file
-joint_space_planner.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/joint_space_planner.dir/build.make CMakeFiles/joint_space_planner.dir/joint_space_planner.cpp.s
-.PHONY : joint_space_planner.cpp.s
+instrument_motion_planner.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/instrument_motion_planner.dir/build.make CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.s
+.PHONY : instrument_motion_planner.cpp.s
 
 # Help Target
 help:
@@ -161,10 +161,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... joint_space_planner"
-	@echo "... joint_space_planner.o"
-	@echo "... joint_space_planner.i"
-	@echo "... joint_space_planner.s"
+	@echo "... instrument_motion_planner"
+	@echo "... instrument_motion_planner.o"
+	@echo "... instrument_motion_planner.i"
+	@echo "... instrument_motion_planner.s"
 .PHONY : help
 
 

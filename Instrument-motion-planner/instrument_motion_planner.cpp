@@ -1,4 +1,4 @@
-#include "joint_space_planner.h"
+#include "instrument_motion_planner.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
