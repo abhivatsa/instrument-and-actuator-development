@@ -52,10 +52,11 @@ struct AppData
             actual_position[jnt_ctr] = 0;
             actual_velocity[jnt_ctr] = 0;
             actual_torque[jnt_ctr] = 0;
-            cart_pos[3] = 0;
+            actual_cart_pos[3] = 0;
             target_position[jnt_ctr] = 0;
             target_velocity[jnt_ctr] = 0;
             target_torque[jnt_ctr] = 0;
+            target_cart_pos[3] = 0;
             drive_operation_mode = OperationModeState::POSITION_MODE;
             switched_on = false;
         }
@@ -64,10 +65,11 @@ struct AppData
     double actual_position[3];
     double actual_velocity[3];
     double actual_torque[3];
-    double cart_pos[3];
+    double actual_cart_pos[3];
     double target_position[3];
     double target_velocity[3];
     double target_torque[3];
+    double target_cart_pos[3];
     OperationModeState drive_operation_mode;
     bool switched_on;
 

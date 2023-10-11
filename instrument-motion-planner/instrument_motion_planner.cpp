@@ -95,6 +95,7 @@ int main()
                 if (commmand_data_ptr->type == CommandType::JOG)
                 {
                     app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
+
                     while (commmand_data_ptr->jog_data.type == 0)
                         jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 0);
 
@@ -106,6 +107,8 @@ int main()
                 else if (commmand_data_ptr->type == CommandType::HAND_CONTROL)
                 {
                     /* code */
+
+                    // It has to be rewritten for Instrument
                     std::cout << "Hand Control Enabled \n";
                     app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     if (!hand_Controller_switch){
@@ -140,11 +143,16 @@ int main()
                 {
                     app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     /* code */
+
+                    // A function call has to be made for Engagement of Sterile adapoter
+
                 }
                 else if (commmand_data_ptr->type == CommandType::INSTRUMENT_ENGAGEMENT)
                 {
                     app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
                     /* code */
+
+                    // A function call has to be made for Engagement of Instrument Engagement
                 }
                 else
                 {
@@ -217,6 +225,8 @@ double jog(int index, int dir, int type)
     else // task space
     {
 
+        // HAs to be Rewritten For Instrument
+
         std::vector<double> current_pos, desired_pos;
         current_pos.resize(6);
         desired_pos.resize(6);
@@ -256,20 +266,6 @@ double jog(int index, int dir, int type)
             command_pos[jnt_ctr] = desired_pos[jnt_ctr];
         }
 
-        // Eigen::MatrixXd jacobian;
-        // jac_solver.computeJacobianInline(current_pos, jacobian);
-        // Eigen::VectorXd cart_vel;
-        // cart_vel.resize(6);
-        // cart_vel[index] = 0.001;
-        // Eigen::VectorXd del_pos = jacobian*cart_vel;
-
-        // double command_pos[6];
-        // double command_vel[6] = {0,0,0,0,0,0};
-
-        // for (int jnt_ctr = 0; jnt_ctr < 6; jnt_ctr++){
-        //     command_pos[jnt_ctr] = current_pos[jnt_ctr] + del_pos[jnt_ctr];
-        // }
-
         write_to_drive(command_pos, command_vel);
         usleep(1000);
     }
@@ -279,6 +275,7 @@ double jog(int index, int dir, int type)
 double hand_control_jog(double start_pos[3], Eigen::Vector3d& eef_pos, Eigen::Matrix3d& eef_orient)
 {
     // std::cout<<"eef_orient : \n"<<eef_orient<<std::endl;
+    // It has to be re written for Instruments
 
     std::vector<double> current_pos, desired_pos;
     current_pos.resize(6);
