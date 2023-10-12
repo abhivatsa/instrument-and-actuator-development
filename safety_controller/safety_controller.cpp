@@ -34,7 +34,7 @@ int main()
 
     joint_data_ptr->setZero();
     system_state_data_ptr->setZero();
-    // app_data_ptr->setZero();
+    // app_data_ptr->setZero();  //TODO: Why is it commented?
 
     while (app_data_ptr->init_system == -1)
     {
@@ -56,19 +56,21 @@ int main()
     }
 
     while (system_state_data_ptr->current_state == DriveState::SAFETY_CONTROLLER_ENABLED &&
-           system_state_data_ptr->current_state != DriveState::READY_FOR_OPERATION)
+           system_state_data_ptr->current_state != DriveState::READY_FOR_OPERATION) //TODO: Redundent condition, second condition is not required.
     {
         check_limits();
 
         system_state_data_ptr->safety_check_done = true;
     }
+    //TODO: If safety check fails then it should go back to Line 46 (probably), 
+    //so that another saftey check can be performed if needed.
 
-    if (system_state_data_ptr->current_state != DriveState::READY_FOR_OPERATION)
+    if (system_state_data_ptr->current_state != DriveState::READY_FOR_OPERATION) //TODO: Shouldn't this be an equality check? because after successful safety check `current_state` will automatically go to READY_FOR_OPERATION
     {
         app_data_ptr->init_hardware_check = 1;
-    }
+    } //It will only go inside if current_state goes in ERROR
 
-    while (app_data_ptr->init_ready_for_operation == -1)
+    while (app_data_ptr->init_ready_for_operation == -1) //TODO: will it go inside? After init_hardware_check is set to 1, init_ready_for_operation will become 0 (motion planner Line 221 and 238) 
     {
         usleep(1000);
         check_limits();
@@ -83,13 +85,13 @@ int main()
         read_data();
     }
 
-    while (system_state_data_ptr->current_state == DriveState::OPERATION_ENALBLED)
+    while (system_state_data_ptr->current_state == DriveState::OPERATION_ENALBLED) //TODO: Instead of several if's and while's we can write switch inside a while, so that even if drive goes in error it can repeat the process and main function will not end.
     {
 
         check_limits();
         read_data();
         write_data();
-    }
+    }// main function will end if ever drive goes in error
 }
 
 void read_data()
@@ -140,7 +142,7 @@ int pos_limit_check(double *joint_pos)
     {
         if (fabs(joint_pos[jnt_ctr]) > 2 * M_PI / 3)
         {
-            // return -1;
+            // return -1; //TODO
         }
         std::cout << "jnt_ctr : " << jnt_ctr << ", joint_pos[jnt_ctr] : " << joint_pos[jnt_ctr] << std::endl;
     }

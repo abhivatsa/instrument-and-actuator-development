@@ -228,7 +228,7 @@ void cyclic_task()
         {
             if (system_state_data_ptr->ready_for_operation)
             {
-                if (system_state_data_ptr->safety_check_done && !system_state_data_ptr->trigger_error_mode)
+                if (system_state_data_ptr->safety_check_done && !system_state_data_ptr->trigger_error_mode)//TODO: It will never go inside, see Line 221
                 {
                     system_state_data_ptr->current_state = DriveState::SWITCH_TO_OPERATION;
                 }
