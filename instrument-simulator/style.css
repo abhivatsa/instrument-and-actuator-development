@@ -31,6 +31,10 @@ body {
     padding-right: 50px;
 }
 
+.mode-selection .progress{
+    width: 250px;
+}
+
 .slider_container {
     margin: auto;
     padding: 0;

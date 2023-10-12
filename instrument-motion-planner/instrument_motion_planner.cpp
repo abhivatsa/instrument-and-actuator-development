@@ -24,47 +24,36 @@ int main()
     const int SIZE_SysData = sizeof(SystemData);
     const int SIZE_AppData = sizeof(AppData);
     const int SIZE_ComData = sizeof(CommandData);
+    const int SIZE_ForceDimData = sizeof(ForceDimData);
 
     /* shared memory file descriptor */
     int shm_fd_SysData;
     double shm_fd_AppData;
     double shm_fd_ComData;
+    double shm_fd_ForceDimData;
 
     /* open the shared memory object */
     shm_fd_SysData = shm_open("SysData", O_CREAT | O_RDWR, 0666);
     shm_fd_AppData = shm_open("AppData", O_CREAT | O_RDWR, 0666);
     shm_fd_ComData = shm_open("ComData", O_CREAT | O_RDWR, 0666);
+    shm_fd_ForceDimData = shm_open("ForceDimData", O_CREAT | O_RDWR, 0666);
 
     ftruncate(shm_fd_SysData, SIZE_SysData);
     ftruncate(shm_fd_AppData, SIZE_AppData);
     ftruncate(shm_fd_ComData, SIZE_ComData);
+    ftruncate(shm_fd_ForceDimData, SIZE_ForceDimData);
 
     /* memory map the shared memory object */
     system_data_ptr = static_cast<SystemData *>(mmap(0, SIZE_SysData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SysData, 0));
     app_data_ptr = static_cast<AppData *>(mmap(0, SIZE_AppData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_AppData, 0));
     commmand_data_ptr = static_cast<CommandData *>(mmap(0, SIZE_ComData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_ComData, 0));
-
-    /* the size (in bytes) of shared memory object */
-    const double FORCE_DIM_SIZE = sizeof(double[20]);
-
-    /* shared memory file descriptor */
-    int shm_force_dim;
-
-    /* open the shared memory object */
-    shm_force_dim = shm_open("force_dim_data", O_CREAT | O_RDWR, 0666);
-
-    ftruncate(shm_force_dim, FORCE_DIM_SIZE);
-
-    /* memory map the shared memory object */
-    force_dim_ptr = static_cast<double *>(mmap(0, FORCE_DIM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_force_dim, 0));
+    force_dim_ptr = static_cast<ForceDimData *>(mmap(0, SIZE_ForceDimData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_ForceDimData, 0));
 
     double start_pos[3] = {0, 0, 0};
 
-    start_pos[0] = force_dim_ptr[0];
-    start_pos[1] = force_dim_ptr[1];
-    start_pos[2] = force_dim_ptr[2];
-
-    std::cout<<"start_pos 0 : "<<start_pos[0]<<", start_pos 1 : "<<start_pos[1]<<", stgart_pos 2 : "<<start_pos[2]<<std::endl;
+    start_pos[0] = force_dim_ptr->cart_pos[0];
+    start_pos[1] = force_dim_ptr->cart_pos[1];
+    start_pos[2] = force_dim_ptr->cart_pos[2];
 
     bool in_operation_ = false;
     system_data_ptr->setSystemState(SystemState::POWER_OFF);
@@ -83,8 +72,15 @@ int main()
 
         if (!in_operation_ && system_data_ptr->request != 0)
         {
-            changeSystemState();
+            while (system_data_ptr->getSystemState() == SystemState::READY){
+                changeSystemState();
+            }
+            
+            system_data_ptr->request = 0;
+
         }
+
+        // if ()
 
         if (commmand_data_ptr->type != CommandType::NONE)
         {
@@ -101,7 +97,7 @@ int main()
 
                     while (commmand_data_ptr->jog_data.type == 1)
                         jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 1);
-                    
+
                     commmand_data_ptr->type = CommandType::NONE;
                 }
                 else if (commmand_data_ptr->type == CommandType::HAND_CONTROL)
@@ -111,33 +107,31 @@ int main()
                     // It has to be rewritten for Instrument
                     std::cout << "Hand Control Enabled \n";
                     app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
-                    if (!hand_Controller_switch){
+                    if (!hand_Controller_switch)
+                    {
 
                         std::vector<double> current_pos, desired_pos;
                         current_pos.resize(6);
                         desired_pos.resize(6);
                         std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
 
-                        
                         trans_mat.resize(4, 4);
 
                         fk_solver.computeFK(current_pos, trans_mat);
 
-                        
                         eef_pos = trans_mat.topRightCorner(3, 1);
 
-                        
                         eef_orient = trans_mat.topLeftCorner(3, 3);
 
-                        std::cout<<"eef_pos : \n"<<eef_pos<<std::endl;
+                        std::cout << "eef_pos : \n"
+                                  << eef_pos << std::endl;
 
                         hand_Controller_switch = true;
-
                     }
-                    else{
+                    else
+                    {
                         hand_control_jog(start_pos, eef_pos, eef_orient);
                     }
-                    
                 }
                 else if (commmand_data_ptr->type == CommandType::STERILE_ENGAGEMENT)
                 {
@@ -145,7 +139,6 @@ int main()
                     /* code */
 
                     // A function call has to be made for Engagement of Sterile adapoter
-
                 }
                 else if (commmand_data_ptr->type == CommandType::INSTRUMENT_ENGAGEMENT)
                 {
@@ -195,18 +188,78 @@ int changeSystemState()
     std::cout << "Change state called\n";
     if (system_data_ptr->request == 1)
     {
-        system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
-        sleep(2);
-        system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
-        sleep(2);
-        system_data_ptr->setSystemState(SystemState::READY);
+        switch (system_data_ptr->getSystemState())
+        {
+
+        case SystemState::POWER_OFF:
+        {
+
+            if (!app_data_ptr->simulation_mode)
+            {
+
+                app_data_ptr->init_system = 0;
+
+                if (app_data_ptr->init_system == 1)
+                {
+                    system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
+                }
+            }
+            else
+            {
+                system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
+                sleep(2);
+            }
+        }
+
+        case SystemState::INITIALIZING_SYSTEM:
+        {
+            if (!app_data_ptr->simulation_mode)
+            {
+
+                app_data_ptr->init_hardware_check = 0;
+
+                if (app_data_ptr->init_hardware_check == 1)
+                {
+                    system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
+                }
+            }
+            else
+            {
+                system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
+                sleep(2);
+            }
+        }
+
+        case SystemState::HARWARE_CHECK:
+        {
+            if (!app_data_ptr->simulation_mode)
+            {
+
+                app_data_ptr->init_ready_for_operation = 0;
+
+                if (app_data_ptr->init_ready_for_operation == 1)
+                {
+                    system_data_ptr->setSystemState(SystemState::READY);
+                }
+            }
+            else
+            {
+                system_data_ptr->setSystemState(SystemState::READY);
+                sleep(2);
+            }
+        }
+
+        case SystemState::READY:
+        {
+        }
+        }
+
     }
     else if (system_data_ptr->request == -1)
     {
         system_data_ptr->setSystemState(SystemState::POWER_OFF);
     }
 
-    system_data_ptr->request = 0;
     return 1;
 }
 
@@ -272,7 +325,7 @@ double jog(int index, int dir, int type)
     return 1;
 }
 
-double hand_control_jog(double start_pos[3], Eigen::Vector3d& eef_pos, Eigen::Matrix3d& eef_orient)
+double hand_control_jog(double start_pos[3], Eigen::Vector3d &eef_pos, Eigen::Matrix3d &eef_orient)
 {
     // std::cout<<"eef_orient : \n"<<eef_orient<<std::endl;
     // It has to be re written for Instruments
@@ -282,14 +335,14 @@ double hand_control_jog(double start_pos[3], Eigen::Vector3d& eef_pos, Eigen::Ma
     desired_pos.resize(6);
     std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
 
-
     Eigen::Vector3d eef_pos_new;
 
-    eef_pos_new[0] = eef_pos[0] + 2*(force_dim_ptr[0] - start_pos[0]);
-    eef_pos_new[1] = eef_pos[1] + 2*(force_dim_ptr[1] - start_pos[1]);
-    eef_pos_new[2] = eef_pos[2] + 2*(force_dim_ptr[2] - start_pos[2]);
+    eef_pos_new[0] = eef_pos[0] + 2 * (force_dim_ptr[0] - start_pos[0]);
+    eef_pos_new[1] = eef_pos[1] + 2 * (force_dim_ptr[1] - start_pos[1]);
+    eef_pos_new[2] = eef_pos[2] + 2 * (force_dim_ptr[2] - start_pos[2]);
 
-    std::cout<<"updated eef_pos : \n"<<eef_pos_new<<std::endl;
+    std::cout << "updated eef_pos : \n"
+              << eef_pos_new << std::endl;
 
     ik_solver.computeIK(eef_pos_new, eef_orient, current_pos, desired_pos);
 
@@ -306,7 +359,6 @@ double hand_control_jog(double start_pos[3], Eigen::Vector3d& eef_pos, Eigen::Ma
     usleep(1000);
 
     return 0;
-
 }
 
 int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])

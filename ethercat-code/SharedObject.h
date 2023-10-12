@@ -24,6 +24,8 @@ struct JointData
             target_position[jnt_ctr] = 0;
             target_velocity[jnt_ctr] = 0;
             target_torque[jnt_ctr] = 0;
+            sterile_detection_status = false;
+            instrument_detection_status = false;
         }
     }
 
@@ -33,6 +35,8 @@ struct JointData
     double target_position[3];
     double target_velocity[3];
     double target_torque[3];
+    bool sterile_detection_status;
+    bool instrument_detection_status;
 };
 
 enum DriveState

@@ -271,6 +271,9 @@ void cyclic_task()
                 joint_data_ptr->joint_torque[jnt_ctr] = conv_to_actual_torque(EC_READ_S16(domain1_pd + drive_offset[jnt_ctr].torque_actual_value));
             }
 
+            joint_data_ptr->sterile_detection_status = true;
+            joint_data_ptr->instrument_detection_status = true;
+
             switch (system_state_data_ptr->drive_operation_mode){
                 
                 case OperationModeState::POSITION_MODE:{
