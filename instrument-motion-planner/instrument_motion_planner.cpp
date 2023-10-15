@@ -193,59 +193,33 @@ int changeSystemState()
 
         case SystemState::POWER_OFF:
         {
+            app_data_ptr->init_system = 0;
 
-            if (!app_data_ptr->simulation_mode)
-            {
-
-                app_data_ptr->init_system = 0;
-
-                if (app_data_ptr->init_system == 1)
-                {
-                    system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
-                }
-            }
-            else
+            if (app_data_ptr->init_system == 1)
             {
                 system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
-                sleep(2);
             }
         }
 
         case SystemState::INITIALIZING_SYSTEM:
         {
-            if (!app_data_ptr->simulation_mode)
-            {
+            app_data_ptr->initialize_drives = true;
 
-                app_data_ptr->init_hardware_check = 0;
-
-                if (app_data_ptr->init_hardware_check == 1)
-                {
-                    system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
-                }
-            }
-            else
+            app_data_ptr->init_hardware_check = 0;
+            
+            if (app_data_ptr->init_hardware_check == 1)
             {
                 system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
-                sleep(2);
             }
         }
 
         case SystemState::HARWARE_CHECK:
         {
-            if (!app_data_ptr->simulation_mode)
-            {
 
-                app_data_ptr->init_ready_for_operation = 0;
-
-                if (app_data_ptr->init_ready_for_operation == 1)
-                {
-                    system_data_ptr->setSystemState(SystemState::READY);
-                }
-            }
-            else
+            app_data_ptr->init_ready_for_operation = 0;
+            if (app_data_ptr->init_ready_for_operation == 1)
             {
                 system_data_ptr->setSystemState(SystemState::READY);
-                sleep(2);
             }
         }
 

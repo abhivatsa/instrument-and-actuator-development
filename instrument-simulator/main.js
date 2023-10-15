@@ -38,13 +38,19 @@ var joint_velocities = [0,0,0];
 var joint_torque = [0,0,0];
 // Update robot state
 var update_cart_data_done = false;
+
+var sterile_detected = false;
+var sterile_engaged = false;
+var instrument_detected = false;
+var instrument_engaged = false;
+
+var sterile_detect_progress = 0;
+var sterile_engage_progress = 0;
+var instrument_detect_progress = 0;
+var instrument_engage_progress = 0;
+
 function updateRobotState(positions, velocities, torque)
 {
-    // console.log(positions);
-    // link1.rotation.y = positions.joint1;
-    // link2.rotation.z = positions.joint2;
-    // link3.rotation.z = positions.joint3;
-
     joint_val_1.innerText = positions.joint1.toFixed(2);
     joint_val_2.innerText = positions.joint2.toFixed(2);
     joint_val_3.innerText = positions.joint3.toFixed(2);
@@ -52,6 +58,44 @@ function updateRobotState(positions, velocities, torque)
     j1_slider.value = convertValToRange(positions.joint1, 0);
     j2_slider.value = convertValToRange(positions.joint2, 0);
     j3_slider.value = convertValToRange(positions.joint3, 0);
+
+
+    sterile_detect_progress = 0;
+    if(sterile_detect_progress >= 100.0)
+    {
+        sterile_detected = true;
+        instrument_detect_progress = 0;
+        instrument_engage_progress = 0;
+    }
+    if(sterile_detected)
+    {
+        sterile_engage_progress = 0;
+        instrument_detect_progress = 0;
+        instrument_engage_progress = 0;
+    }
+    if(sterile_detect_progress >= 100.0)
+    {
+        sterile_engaged = true;
+        instrument_detect_progress = 0;
+        instrument_engage_progress = 0;
+    }
+    if(sterile_engaged)
+    {
+        instrument_detect_progress = 0;
+    }
+    if(instrument_detect_progress>= 100.0)
+    {
+        instrument_detected = true;
+    }
+    if(instrument_detected)
+    {
+        instrument_engage_progress = 0;
+    }
+    if(instrument_engage_progress >= 100.0)
+    {
+        instrument_engaged = true;
+    }
+
 
     current_time = current_time + 0.001;
     joint_positions[0] = positions.joint1;
@@ -65,8 +109,6 @@ function updateRobotState(positions, velocities, torque)
     joint_torque[0] = torque.joint1;
     joint_torque[1] = torque.joint2;
     joint_torque[2] = torque.joint3;
-
-    // updateChartData(positions);
 }
 
 function updateChartData()
@@ -145,10 +187,14 @@ function updateSystemState(state)
     // update the data    
     if(state.power_on_status == 3) // power on
     {
-        enableButtons(true);
+        if (sterile_engaged && instrument_engaged)
+        {
+            enableButtons(true);
+        }
         enablePowerBtn(true);
         powerBtn.checked = true;
-        systemStateSpinner.classList.add("visually-hidden");
+        // systemStateSpinner.classList.add("visually-hidden");
+        system_state_progress.parentElement.classList.add("visually-hidden");
         systemStateText.innerHTML = "Ready";
 
         console.log("power on");
@@ -158,7 +204,8 @@ function updateSystemState(state)
         enableButtons(false);
         enablePowerBtn(true);
 
-        systemStateSpinner.classList.add("visually-hidden");
+        // systemStateSpinner.classList.add("visually-hidden");
+        system_state_progress.parentElement.classList.add("visually-hidden");
         systemStateText.innerHTML = "Powered OFF";
 
         console.log("power off");
@@ -168,8 +215,10 @@ function updateSystemState(state)
         enableButtons(false);
         enablePowerBtn(false);
 
-        systemStateSpinner.classList.remove("visually-hidden");
+        // systemStateSpinner.classList.remove("visually-hidden");
         systemStateText.innerHTML = "Initializing System...";
+        system_state_progress.parentElement.classList.remove("visually-hidden");
+        system_state_progress.getAttribute("aria-valuenow") = 25;
 
         console.log("Initializing System...");
     }
@@ -178,8 +227,11 @@ function updateSystemState(state)
         enableButtons(false);
         enablePowerBtn(false);
 
-        systemStateSpinner.classList.remove("visually-hidden");
+        // systemStateSpinner.classList.remove("visually-hidden");
         systemStateText.textContent = "Hardware check...";
+
+        system_state_progress.parentElement.classList.remove("visually-hidden");
+        system_state_progress.getAttribute("aria-valuenow") = 50;
 
         console.log("Hardware check...");
     }
@@ -187,7 +239,7 @@ function updateSystemState(state)
     {
         enableButtons(false);
         enablePowerBtn(false);
-        systemStateSpinner.classList.remove("visually-hidden");
+        // systemStateSpinner.classList.remove("visually-hidden");
         systemStateText.textContent = "Executing...";
 
         console.log("Executing...");
@@ -257,13 +309,11 @@ function onModeChangeClicked(element)
     }
     if(checkState())
     {
-        simulationMode.disabled = true;
         enablePowerBtn(false);
         
     }
     else
     {
-        simulationMode.disabled = false;
         enablePowerBtn(true);
     }
 }
@@ -297,15 +347,12 @@ document.addEventListener('DOMContentLoaded', handler)
 const input_control_tab = document.getElementById("inputControl");
 
 // Input sliders
-const sterileEngagementMode = document.getElementById("sterileEngagement");
-const instrumentEngagementMode = document.getElementById("instrumentEngagement");
 const handControllerMode = document.getElementById("handController");
-const simulationMode = document.getElementById("simulationMode");
 const powerBtn = document.getElementById("powerOnMode");
 const jogButtons = document.getElementsByClassName("jog");
 
 
-var buttons = [sterileEngagementMode, instrumentEngagementMode, handControllerMode, simulationMode];
+var buttons = [handControllerMode];
 
 // joint values
 var joint_val_1 = document.getElementById("joint_val_1");
@@ -335,15 +382,17 @@ const systemStateText = document.getElementById("systemState");
 const systemStateContainer = document.getElementById("systemStateContainer");
 const systemStateSpinner = document.getElementById("systemStateSpinner");
 
-
+// progess bars
+const system_state_progress = document.getElementById("SystemStateProgess");
+const sterile_detect_progress_bar = document.getElementById("SterileDetectionProgess")
+const sterile_engage_progress_bar = document.getElementById("SterileEngagementProgess")
+const instrument_detect_progress_bar = document.getElementById("InstrumentDetectionProgess")
+const instrument_engage_progress_bar = document.getElementById("InstrumentEngagementProgess")
 
 // enable disble the buttons
 function enableButtons(state) 
 {
-    sterileEngagementMode.disabled = !state;
-    instrumentEngagementMode.disabled = !state;
     handControllerMode.disabled = !state;
-    simulationMode.disabled = !state;
 
     for (let index = 0; index < jogButtons.length; index++)
     {
@@ -367,18 +416,7 @@ function checkState(element)
     {
         return !powerBtn.checked;
     }
-    else if(element == teachMode)
-    {
-        return handControllerMode.checked;
-    }
-    else if(element == handControllerMode)
-    {
-        return teachMode.checked;
-    }
-    else
-    {
-        return (teachMode.checked || handControllerMode.checked);
-    }
+    return false;
 }
 
 // enable/disable power btn
@@ -402,10 +440,8 @@ for (let index = 0; index < jogButtons.length; index++) {
 
 
 // Mode button event handler
-teachMode.onclick  = () => {onModeChangeClicked(teachMode)};
 handControllerMode .onclick = () => {
     onModeChangeClicked(handControllerMode);
-
     var cmd_obj =
         { 
             command_data : {
@@ -413,9 +449,6 @@ handControllerMode .onclick = () => {
                 }
         };
         socket.send(JSON.stringify(cmd_obj));
-
-
-
 };
 
 //-------------------------------------- CHART JS --------------------

@@ -161,12 +161,21 @@ void cyclic_task()
 
         switch (system_state_data_ptr->current_state)
         {
-        case DriveState::DISABLED:
+        case DriveState::INITIALIZE:
         {
+            system_state_data_ptr->current_state = DriveState::NOT_READY_TO_SWITCH_ON;
+            break;
+        }
+        case DriveState::NOT_READY_TO_SWITCH_ON:
+        {
+            if(system_state_data_ptr->initialize_drives)
+            {
+                system_state_data_ptr->current_state = DriveState::SWITCHED_ON;
+            }
             /* code */
             break;
         }
-        case DriveState::SWITCHED_ON: // Automatic switch to safety controller when finished
+        case DriveState::SWITCHED_ON: 
         {
             for (size_t jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
             {
@@ -187,53 +196,49 @@ void cyclic_task()
             std::cout << "drive_switched_on[1] " << drive_switched_on[1] << std::endl;
             std::cout << "drive_switched_on[2] " << drive_switched_on[2] << std::endl;
 
-            system_state_data_ptr->current_state = drive_switched_on[0] &&
+            // system_state_data_ptr->current_state = drive_switched_on[0] &&
+            //                                                drive_switched_on[1] &&
+            //                                                drive_switched_on[2]
+            //                                            ? DriveState::SAFETY_CONTROLLER_ENABLED
+            //                                            : DriveState::SWITCHED_ON;
+
+            bool drives_in_switched_on = drive_switched_on[0] &&
                                                            drive_switched_on[1] &&
                                                            drive_switched_on[2]
-                                                       ? DriveState::SAFETY_CONTROLLER_ENABLED
-                                                       : DriveState::SWITCHED_ON;
+                                                       ? true
+                                                       : false;
 
-            system_state_data_ptr->safety_check_done = false;
-            system_state_data_ptr->trigger_error_mode = false;
-            break;
-        }
-        case DriveState::SAFETY_CONTROLLER_ENABLED: // Automatic switch to Ready for operation/Error (safety check)
-        {
-            for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+            if(drives_in_switched_on)
             {
-                std::cout << " joint val jnt_ctr " << jnt_ctr << " : " << EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].position_actual_value) << std::endl;
-                joint_data_ptr->joint_position[jnt_ctr] = conv_count_to_rad(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].position_actual_value));
-                joint_data_ptr->joint_velocity[jnt_ctr] = conv_mrev_sec_to_rad_sec(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].velocity_actual_value));
-                joint_data_ptr->joint_torque[jnt_ctr] = 0;
-            }
-            system_state_data_ptr->start_safety_check = true;
-
-            std::cout << "jnt ctr : " << system_state_data_ptr->safety_check_done << std::endl;
-
-            if (system_state_data_ptr->safety_check_done)
-            {
-                if (system_state_data_ptr->trigger_error_mode)
-                    system_state_data_ptr->current_state = DriveState::ERROR;
-                else
+                for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
                 {
-                    system_state_data_ptr->current_state = DriveState::READY_FOR_OPERATION;
-                    system_state_data_ptr->start_safety_check = false;
-                    system_state_data_ptr->safety_check_done = false;
+                    std::cout << " joint val jnt_ctr " << jnt_ctr << " : " << EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].position_actual_value) << std::endl;
+                    joint_data_ptr->joint_position[jnt_ctr] = conv_count_to_rad(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].position_actual_value));
+                    joint_data_ptr->joint_velocity[jnt_ctr] = conv_mrev_sec_to_rad_sec(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].velocity_actual_value));
+                    joint_data_ptr->joint_torque[jnt_ctr] = 0;
+                }
+                system_state_data_ptr->start_safety_check = true;
+
+                std::cout << "jnt ctr : " << system_state_data_ptr->safety_check_done << std::endl;
+
+                if (system_state_data_ptr->safety_check_done)
+                {
+                    if (system_state_data_ptr->trigger_error_mode)
+                        system_state_data_ptr->current_state = DriveState::ERROR;
+                    else
+                    {
+                        if(system_state_data_ptr->switch_to_operation)
+                        {
+                            system_state_data_ptr->current_state = DriveState::SWITCH_TO_OPERATION;
+                        }
+                    }
                 }
             }
-
-            break;
-        }
-        case DriveState::READY_FOR_OPERATION: // Wait for acknowledgement from user to swich to operation mode
-        {
-            if (system_state_data_ptr->ready_for_operation)
+            else
             {
-                if (system_state_data_ptr->safety_check_done && !system_state_data_ptr->trigger_error_mode)//TODO: It will never go inside, see Line 221
-                {
-                    system_state_data_ptr->current_state = DriveState::SWITCH_TO_OPERATION;
-                }
+                system_state_data_ptr->safety_check_done = false;
+                system_state_data_ptr->trigger_error_mode = false;
             }
-            // system_state_data_ptr->ready_for_operation = true;
 
             break;
         }

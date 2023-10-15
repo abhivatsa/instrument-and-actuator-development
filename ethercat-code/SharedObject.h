@@ -41,10 +41,9 @@ struct JointData
 
 enum DriveState
 {
-    DISABLED,
+    INITIALIZE,
+    NOT_READY_TO_SWITCH_ON,
     SWITCHED_ON,
-    SAFETY_CONTROLLER_ENABLED,
-    READY_FOR_OPERATION,
     SWITCH_TO_OPERATION,
     OPERATION_ENALBLED,
     ERROR,
@@ -59,13 +58,15 @@ enum OperationModeState{
 struct SystemStateData
 {
     void setZero(){
-        current_state = DriveState::SWITCHED_ON;
+        current_state = DriveState::INITIALIZE;
+        initialize_drives = false;
+        switch_to_operation = false;
 
         status_switched_on = false;
         status_operation_enabled = false;
         safety_controller_enabled = false;
         trigger_error_mode = false;
-        ready_for_operation = false;
+
         safety_check_done = false;
         start_safety_check = false;
         for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++){
@@ -89,8 +90,9 @@ struct SystemStateData
     bool start_safety_check;
     bool safety_check_done;
 
+    bool initialize_drives;
+    bool switch_to_operation;
     
-    bool ready_for_operation;
     bool drive_enable_for_operation[3];
 };
 

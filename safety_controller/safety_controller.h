@@ -8,10 +8,9 @@
 
 enum DriveState
 {
-    DISABLED,
+    INITIALIZE,
+    NOT_READY_TO_SWITCH_ON,
     SWITCHED_ON,
-    SAFETY_CONTROLLER_ENABLED,
-    READY_FOR_OPERATION,
     SWITCH_TO_OPERATION,
     OPERATION_ENALBLED,
     ERROR,
@@ -22,6 +21,16 @@ enum OperationModeState
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
     TORQUE_MODE = 10,
+};
+
+enum SafetyStates
+{
+    INITALIZE,
+    INITIALIZE_DRIVES,
+    SAFETY_CHECK,
+    READY_FOR_OPERATION,
+    OPERATION,
+    ERROR
 };
 
 struct JointData
@@ -56,6 +65,16 @@ struct AppData
 {
     void setZero()
     {
+        switch_to_operation = false;
+        initialize_drives = false;
+        initialize_system = false;
+        trigger_error = false;
+        safety_process_status = false;
+        drive_initialized = false;
+        safety_check_done = false;
+        reset_error = false;
+        operation_enalble_status = false;
+        
         for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
             actual_position[jnt_ctr] = 0;
@@ -70,10 +89,6 @@ struct AppData
             sterile_detection = false;
             instrument_detection = false;
             simulation_mode = false;
-
-            init_system = -1;
-            init_hardware_check = -1;
-            init_ready_for_operation = -1;
         }
     }
 
@@ -90,26 +105,33 @@ struct AppData
     bool instrument_detection;
     bool simulation_mode;
 
-    int init_system;
-    int init_hardware_check;
-    int init_ready_for_operation;
+    bool trigger_error;
+    bool safety_process_status;
+    bool initialize_system;
+    bool initialize_drives;
+    bool drive_initialized;
+    bool switch_to_operation;
+    bool safety_check_done;
+    bool operation_enalble_status;
+    bool reset_error;
 };
 
 struct SystemStateData
 {
-    void setZero()
-    {
-        current_state = DriveState::SWITCHED_ON;
+    void setZero(){
+        current_state = DriveState::INITIALIZE;
         drive_operation_mode = OperationModeState::POSITION_MODE;
+        initialize_drives = false;
+        switch_to_operation = false;
+
         status_switched_on = false;
         status_operation_enabled = false;
         safety_controller_enabled = false;
         trigger_error_mode = false;
-        ready_for_operation = false;
+
         safety_check_done = false;
         start_safety_check = false;
-        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
-        {
+        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++){
             drive_enable_for_operation[jnt_ctr] = false;
         }
     }
@@ -117,20 +139,22 @@ struct SystemStateData
     DriveState current_state;
     OperationModeState drive_operation_mode;
     // Variables for Drive status
-    bool status_switched_on;
+    bool status_switched_on; 
     bool status_operation_enabled;
 
     // To determine where safety Code started Running
-    bool safety_controller_enabled;
+    bool safety_controller_enabled; 
 
     // both Variables ghas to Come from Safety Code
-    bool trigger_error_mode; // Chaged from safety controller
-
+    bool trigger_error_mode;   // Chaged from safety controller 
+    
     // Variables to initialize and check the status of safety code at 1000Hz
     bool start_safety_check;
     bool safety_check_done;
 
-    bool ready_for_operation;
+    bool initialize_drives;
+    bool switch_to_operation;
+    
     bool drive_enable_for_operation[3];
 };
 
@@ -142,4 +166,4 @@ int pos_limit_check(double *joint_pos);
 
 void read_data();
 void write_data();
-void check_limits();
+bool check_limits();
