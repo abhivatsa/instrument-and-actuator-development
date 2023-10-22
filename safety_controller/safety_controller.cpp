@@ -164,7 +164,7 @@ int main()
                 if(app_data_ptr->switch_to_operation)// switch to operation? from motion planner
                 {   
                     system_state_data_ptr->switch_to_operation = true;
-                    if(system_state_data_ptr.current_state == DriveState::OPERATION_ENALBLED)
+                    if(system_state_data_ptr->current_state == DriveState::OPERATION_ENALBLED)
                     {
 
                         state = SafetyStates::OPERATION;
@@ -174,7 +174,7 @@ int main()
             }
             case SafetyStates::OPERATION:
             {
-                if(system_state_data_ptr.current_state == DriveState::OPERATION_ENALBLED)
+                if(system_state_data_ptr->current_state == DriveState::OPERATION_ENALBLED)
                 {
                     app_data_ptr->operation_enalble_status = true;
                     // read write
@@ -182,7 +182,7 @@ int main()
                     read_data();
                     write_data();
                 }
-                else if(system_state_data_ptr.current_state == DriveState::ERROR)
+                else if(system_state_data_ptr->current_state == DriveState::ERROR)
                 {
                     app_data_ptr->trigger_error = true;
                     state = SafetyStates::ERROR;
@@ -192,7 +192,7 @@ int main()
             }
             case SafetyStates::ERROR:
             {
-                if(system_state_data_ptr.current_state = DriveState::SWITCHED_ON)
+                if(system_state_data_ptr->current_state = DriveState::SWITCHED_ON)
                 {
                     state = SafetyStates::READY_FOR_OPERATION;
                 }
