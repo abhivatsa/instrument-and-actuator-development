@@ -6,21 +6,7 @@
 #include "MotionPlanning/IK6AxisInline.h"
 #include "MotionPlanning/Jacobian.h"
 
-int write_to_drive(double joint_pos[3], double joint_vel[3]);
-
-int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3]);
-
-int changeSystemState();
-
-double jog(int index, int dir, int type);
-
-double hand_control_jog(double start_pos[3], Eigen::Vector3d &eef_pos, Eigen::Matrix3d &eef_orient);
-
-
-void Jog();
-
-// structer for system data
-enum SystemState
+enum class SystemState
 {
     POWER_OFF,
     INITIALIZING_SYSTEM,
@@ -31,16 +17,7 @@ enum SystemState
     ERROR
 };
 
-enum ActuatorState
-{
-    NONE,
-    STERILE_MOUNTED,
-    STERILE_ENGAGED,
-    INSTRUMENT_MOUNTED,
-    INSTRUMENT_ENGAGED
-};
-
-enum CommandType
+enum class CommandType
 {
     NONE,
     JOG,
@@ -49,12 +26,44 @@ enum CommandType
     INSTRUMENT_ENGAGEMENT
 };
 
-enum OperationModeState
+enum class OperationModeState
 {
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
     TORQUE_MODE = 10,
 };
+
+enum class ActuatorState
+{
+    NONE,
+    STERILE_MOUNTED,
+    STERILE_ENGAGED,
+    INSTRUMENT_MOUNTED,
+    INSTRUMENT_ENGAGED
+};
+
+struct SystemData
+{
+    SystemState getSystemState() const { return system_state; }
+    void setSystemState(SystemState state) { previous_state = system_state; system_state = state; }
+    ActuatorState getActuatorState() const { return actuator_state; }
+    void setActuatorState(ActuatorState state) {actuator_state = state; }
+    void powerOn() { request = system_state == SystemState::POWER_OFF ? 1 : 0; }
+    void powerOff() { request = system_state == SystemState::READY ? -1 : 0; }
+
+    void resetError(){ 
+        if(previous_state == SystemState::IN_EXECUTION)
+            previous_state = SystemState::READY;
+        system_state = previous_state; 
+        }
+    int request = 0;
+
+private:
+    SystemState system_state = SystemState::POWER_OFF;
+    SystemState previous_state = SystemState::POWER_OFF;
+    ActuatorState actuator_state = ActuatorState::NONE;
+};
+
 
 struct AppData
 {
@@ -68,7 +77,7 @@ struct AppData
         drive_initialized = false;
         safety_check_done = false;
         reset_error = false;
-        operation_enalble_status = false
+        operation_enable_status = false;
 
         for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
@@ -107,30 +116,8 @@ struct AppData
     bool drive_initialized;
     bool switch_to_operation;
     bool safety_check_done;
-    bool operation_enalble_status;
+    bool operation_enable_status;
     bool reset_error;
-};
-
-struct SystemData
-{
-    SystemState getSystemState() const { return system_state; }
-    void setSystemState(SystemState state) { previous_state = system_state; system_state = state; }
-    ActuatorState getActuatorState() const { return actuator_state; }
-    void setActuatorState(ActuatorState state) {actuator_state = state; }
-    void powerOn() { request = system_state == SystemState::POWER_OFF ? 1 : 0; }
-    void powerOff() { request = system_state == SystemState::READY ? -1 : 0; }
-
-    void resetError(){ 
-        if(previous_state == SystemState::IN_EXECUTION)
-            previous_state = SystemState::READY;
-        system_state = previous_state; 
-        }
-    int request = 0;
-
-private:
-    SystemState system_state = SystemState::POWER_OFF;
-    SystemState previous_state = SystemState::POWER_OFF;
-    ActuatorState actuator_state = ActuatorState::NONE;
 };
 
 struct CommandData
@@ -154,6 +141,10 @@ struct CommandData
     {
         this->type = CommandType::INSTRUMENT_ENGAGEMENT;
     }
+    void setNone(){
+        this->type = CommandType::NONE;
+    }
+    
     CommandType type;
     struct
     {
@@ -168,37 +159,7 @@ struct CommandData
     } move_to_data;
 };
 
-struct ForceDimData
-{
-
-    void setZero()
-    {
-
-        gripper_pos = 0;
-        gripper_vel = 0;
-
-        for (int ctr = 0; ctr < 3; ctr++)
-        {
-            cart_pos[ctr] = 0;
-            cart_linear_vel[ctr] = 0;
-            cart_angular_vel[ctr] = 0;
-        }
-
-        for (int ctr = 0; ctr < 9; ctr++)
-        {
-            cart_orient[ctr] = 0;
-        }
-    }
-
-    double cart_pos[3];
-    double cart_linear_vel[3];
-    double cart_orient[9];
-    double cart_angular_vel[3];
-    double gripper_pos;
-    double gripper_vel;
-};
 
 SystemData *system_data_ptr;
 AppData *app_data_ptr;
 CommandData *commmand_data_ptr;
-ForceDimData *force_dim_ptr;

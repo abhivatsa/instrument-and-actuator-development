@@ -47,14 +47,13 @@
 
 /****************************************************************************/
 
-
 #define DOMAIN1_POSITION 0
 #define DOMAIN1_START 1
 #define DOMAIN1_END 4
 
 /****************************************************************************/
 #define CLOCK_TO_USE CLOCK_MONOTONIC
-#define MEASURE_TIMING
+// #define MEASURE_TIMING 0
 /** Task period in ns. */
 #define PERIOD_NS (2000000)
 
@@ -63,15 +62,19 @@
                                      faulting */
 
 #define DIFF_NS(A, B) (((B).tv_sec - (A).tv_sec) * NSEC_PER_SEC + \
-        (B).tv_nsec - (A).tv_nsec)
+                       (B).tv_nsec - (A).tv_nsec)
 
-#define TIMESPEC2NS(T) ((uint64_t) (T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
+#define TIMESPEC2NS(T) ((uint64_t)(T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
 
 /****************************************************************************/
 
 /* Constants */
 #define NSEC_PER_SEC (1000000000)
 #define FREQUENCY (NSEC_PER_SEC / PERIOD_NS)
+
+// MOTOR_TYPE = 0 for Faulhaber
+// MOTOR_TYPE = 1 for Maxon
+#define MOTOR_TYPE 1
 
 bool operation_enable_status[3] = {true, true, false};
 
@@ -115,13 +118,23 @@ struct joint_pdos
     unsigned int velocity_offset;
 } drive_offset[3];
 
+#if MOTOR_TYPE == 0
 double gear_ratio = 50;
 double rated_torque = 0.02;
 double enc_count = 4096;
+#elif MOTOR_TYPE == 1
+double gear_ratio = 12825/208;
+double rated_torque = 0.0227;
+double enc_count = 2048;
+#else
+double gear_ratio = 50;
+double rated_torque = 0.02;
+double enc_count = 4096;
+#endif
 
 int conv_radians_to_count(double rad)
 {
-    return (int) (enc_count * gear_ratio *rad / (2 * M_PI));
+    return (int)(enc_count * gear_ratio * rad / (2 * M_PI));
 }
 
 double conv_count_to_rad(int count)
@@ -132,7 +145,7 @@ double conv_count_to_rad(int count)
 // Needs to be checked from Drive Side for Unit and Formula also not correct
 int conv_rad_sec_to_mrev_sec(double rad_sec)
 {
-    return (rad_sec  / (2 * M_PI));
+    return (rad_sec / (2 * M_PI));
 }
 
 double conv_mrev_sec_to_rad_sec(int mrev_sec)
@@ -145,22 +158,63 @@ double conv_to_actual_torque(int torq_val)
     return (torq_val / 1000 * rated_torque * gear_ratio);
 }
 
-
 /****************************************************************************/
 
 struct timespec timespec_add(struct timespec time1, struct timespec time2)
 {
     struct timespec result;
 
-    if ((time1.tv_nsec + time2.tv_nsec) >= NSEC_PER_SEC) {
+    if ((time1.tv_nsec + time2.tv_nsec) >= NSEC_PER_SEC)
+    {
         result.tv_sec = time1.tv_sec + time2.tv_sec + 1;
         result.tv_nsec = time1.tv_nsec + time2.tv_nsec - NSEC_PER_SEC;
-    } else {
+    }
+    else
+    {
         result.tv_sec = time1.tv_sec + time2.tv_sec;
         result.tv_nsec = time1.tv_nsec + time2.tv_nsec;
     }
 
     return result;
+}
+
+void read_drive_state(uint16_t status, int joint_num){
+
+    // cout << "update_state" << endl;
+    if (((status | 65456) ^ 65456) == 0)
+    {
+        std::cout<<"Not ready to switch on, joint num : "<<joint_num<<std::endl;
+    }
+    else if (((status | 65456) ^ 65520) == 0)
+    {
+        std::cout<<"Switch on Disabled, joint num : "<<joint_num<<std::endl;
+    }
+    else if (((status | 65424) ^ 65457) == 0)
+    {
+        std::cout<<"Ready to Switch on, joint num : "<<joint_num<<std::endl;
+    }
+    else if (((status | 65424) ^ 65459) == 0)
+    {
+        std::cout<<"Switched On, joint num : "<<joint_num<<std::endl;
+    }
+    else if (((status | 65424) ^ 65463) == 0)
+    {
+        std::cout<<"Operation Enabled, joint num : "<<joint_num<<std::endl;
+    }
+    else if (((status | 65456) ^ 65471) == 0)
+    {
+        // Fault Reaction Active
+        std::cout << "Fault reaction active" << std::endl;
+    }
+    else if (((status | 65456) ^ 65464) == 0)
+    {
+        // Fault
+        std::cout << "Fault" << std::endl;
+    }
+    else{
+        std::cout<<"State Unknown"<<std::endl;
+    }
+
 }
 
 /*****************************************************************************/
@@ -202,7 +256,7 @@ uint16_t transition_to_operation_enabled(uint16_t status, uint16_t command, int 
 {
     if (((status | 65424) ^ 65459) == 0)
     {
-        std::cout<<"Switched On, joint num : "<<joint_num<<std::endl;
+        std::cout << "Switched On, joint num : " << joint_num << std::endl;
         command = 15;
     }
     else if (((status | 65424) ^ 65463) == 0)
@@ -226,12 +280,12 @@ uint16_t transition_to_fault_state(uint16_t status, uint16_t command, int joint_
     if (((status | 65456) ^ 65471) == 0)
     {
         // Fault Reaction Active
-        std::cout<<"Fault reaction active"<<std::endl;
+        std::cout << "Fault reaction active" << std::endl;
     }
     else if (((status | 65456) ^ 65464) == 0)
     {
         // Fault
-        std::cout<<"Fault"<<std::endl;
+        std::cout << "Fault" << std::endl;
         command = 15;
     }
     else
@@ -241,4 +295,3 @@ uint16_t transition_to_fault_state(uint16_t status, uint16_t command, int joint_
 
     return command;
 }
-

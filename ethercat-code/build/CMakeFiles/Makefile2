@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code
+CMAKE_SOURCE_DIR = /home/abhishek/Documents/instrument-devel-app/ethercat-code
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/build
+CMAKE_BINARY_DIR = /home/abhishek/Documents/instrument-devel-app/ethercat-code/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -81,14 +81,14 @@ clean: CMakeFiles/ecat_config_publisher.dir/clean
 CMakeFiles/ecat_config_publisher.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ecat_config_publisher.dir/build.make CMakeFiles/ecat_config_publisher.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ecat_config_publisher.dir/build.make CMakeFiles/ecat_config_publisher.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/build/CMakeFiles --progress-num=1,2 "Built target ecat_config_publisher"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/abhishek/Documents/instrument-devel-app/ethercat-code/build/CMakeFiles --progress-num=1,2 "Built target ecat_config_publisher"
 .PHONY : CMakeFiles/ecat_config_publisher.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ecat_config_publisher.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/ethercat-code/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ecat_config_publisher.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/ethercat-code/build/CMakeFiles 0
 .PHONY : CMakeFiles/ecat_config_publisher.dir/rule
 
 # Convenience name for target.

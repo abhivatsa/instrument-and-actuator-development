@@ -12,10 +12,10 @@
 using namespace std;
 
 /* pointer to shared memory object */
-double *force_dim_ptr;
 motion_planning::ForwardKinematics fk_solver;
 motion_planning::IK6AxisInline ik_solver;
 motion_planning::Jacobian jac_solver(1);
+
 
 int main()
 {
@@ -61,110 +61,138 @@ int main()
     app_data_ptr->setZero();
     commmand_data_ptr->type = CommandType::NONE;
 
-    Eigen::MatrixXd trans_mat;
-    Eigen::Vector3d eef_pos;
-    Eigen::Matrix3d eef_orient;
-
     bool hand_Controller_switch = false;
 
     while (1)
     {
-
-        if (!in_operation_ && system_data_ptr->request != 0)
+        switch (system_data_ptr->getSystemState())
         {
-            while (system_data_ptr->getSystemState() == SystemState::READY){
-                changeSystemState();
-            }
-            
-            system_data_ptr->request = 0;
-            
-        }
-
-        // if ()
-
-        if (commmand_data_ptr->type != CommandType::NONE)
-        {
-
-            if (!in_operation_)
-            {
-
-                if (commmand_data_ptr->type == CommandType::JOG)
+            case SystemState::POWER_OFF:
+            {/* code */
+                if(system_data_ptr->request == 1)
                 {
-                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
-
-                    while (commmand_data_ptr->jog_data.type == 0)
-                        jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 0);
-
-                    while (commmand_data_ptr->jog_data.type == 1)
-                        jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 1);
-
-                    commmand_data_ptr->type = CommandType::NONE;
-                }
-                else if (commmand_data_ptr->type == CommandType::HAND_CONTROL)
-                {
-                    /* code */
-
-                    // It has to be rewritten for Instrument
-                    std::cout << "Hand Control Enabled \n";
-                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
-                    if (!hand_Controller_switch)
-                    {
-
-                        std::vector<double> current_pos, desired_pos;
-                        current_pos.resize(6);
-                        desired_pos.resize(6);
-                        std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
-
-                        trans_mat.resize(4, 4);
-
-                        fk_solver.computeFK(current_pos, trans_mat);
-
-                        eef_pos = trans_mat.topRightCorner(3, 1);
-
-                        eef_orient = trans_mat.topLeftCorner(3, 3);
-
-                        std::cout << "eef_pos : \n"
-                                  << eef_pos << std::endl;
-
-                        hand_Controller_switch = true;
-                    }
-                    else
-                    {
-                        hand_control_jog(start_pos, eef_pos, eef_orient);
-                    }
-                }
-                else if (commmand_data_ptr->type == CommandType::STERILE_ENGAGEMENT)
-                {
-                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
-                    /* code */
-
-                    // A function call has to be made for Engagement of Sterile adapoter
-                }
-                else if (commmand_data_ptr->type == CommandType::INSTRUMENT_ENGAGEMENT)
-                {
-                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
-                    /* code */
-
-                    // A function call has to be made for Engagement of Instrument Engagement
+                    app_data_ptr->initialize_system = true;
+                    system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
                 }
                 else
                 {
-                    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
-                    in_operation_ = true;
-                    system_data_ptr->setSystemState(SystemState::IN_EXECUTION);
-                    // move point to point
-                    double init_pos[6];
-                    double final_pos[6];
-                    std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(init_pos));
-                    std::copy(std::begin(commmand_data_ptr->move_to_data.goal_position), std::end(commmand_data_ptr->move_to_data.goal_position), std::begin(final_pos));
-                    pt_to_pt_mvmt(init_pos, final_pos);
-
-                    commmand_data_ptr->type = CommandType::NONE;
+                    app_data_ptr->initialize_system = false;
                 }
-                in_operation_ = false;
-                system_data_ptr->setSystemState(SystemState::READY);
+                system_data_ptr->request = 0;
+                break;
             }
-            // commmand_data_ptr->type = CommandType::NONE;
+            case SystemState::INITIALIZING_SYSTEM:
+            {
+                if(app_data_ptr->safety_process_status)
+                {
+                    app_data_ptr->initialize_drives = true;
+                    if(app_data_ptr->drive_initialized)
+                    {
+                        if(app_data_ptr->trigger_error)
+                        {
+                            app_data_ptr->safety_check_done  = false;
+                            system_data_ptr->setSystemState(SystemState::ERROR);
+                        }
+                        else
+                        {
+                            app_data_ptr->safety_check_done  = false;
+                            system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
+                        }
+                    }
+                }
+                else
+                {
+                    app_data_ptr->initialize_drives = false;
+                }
+                break;
+            }
+            case SystemState::HARWARE_CHECK:
+            {
+                app_data_ptr->initialize_drives = false;
+                app_data_ptr->drive_initialized = false;
+
+
+                if(app_data_ptr->safety_check_done)
+                {
+                    if(app_data_ptr->trigger_error)
+                    {
+                        system_data_ptr->setSystemState(SystemState::ERROR);
+                    }
+                    else
+                    {
+                        system_data_ptr->setSystemState(SystemState::READY);
+                    }
+                }
+                break;
+            }
+            case SystemState::READY:
+            {
+                app_data_ptr->switch_to_operation = true;
+                if(app_data_ptr->trigger_error)
+                {
+                    system_data_ptr->setSystemState(SystemState::ERROR);
+                }
+                else if(app_data_ptr->operation_enable_status)
+                {
+                    if(commmand_data_ptr->type != CommandType::NONE)
+                    {
+                        system_data_ptr->setSystemState(SystemState::IN_EXECUTION);
+                    }
+                }
+                break;
+            }
+            case SystemState::IN_EXECUTION:
+            {
+                if(app_data_ptr->trigger_error)
+                {
+                    system_data_ptr->setSystemState(SystemState::ERROR);
+                }
+                else
+                {
+                    if(commmand_data_ptr->type == CommandType::JOG)
+                    {
+                        Jog();
+                    }
+                    else if(commmand_data_ptr->type == CommandType::HAND_CONTROL)
+                    {
+
+                    }
+                    else if(commmand_data_ptr->type == CommandType::STERILE_ENGAGEMENT)
+                    {
+                        sterile_engagement();
+                        commmand_data_ptr->setNone();
+                    }
+                    else if(commmand_data_ptr->type == CommandType::INSTRUMENT_ENGAGEMENT)
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+
+                    if(app_data_ptr->trigger_error)
+                    {
+                        system_data_ptr->setSystemState(SystemState::ERROR);
+                    }
+                }
+                break;
+            }
+            case SystemState::ERROR:
+            {
+                app_data_ptr ->trigger_error = false;
+                if(app_data_ptr->reset_error)
+                {
+                    system_data_ptr->resetError();
+                }
+                break;
+            }
+            case SystemState::RECOVERY:  // Not required
+            {
+                break;
+            }
+            default:
+                break;
         }
 
         usleep(1000);
@@ -179,63 +207,31 @@ int write_to_drive(double joint_pos[3], double joint_vel[3])
     {
         app_data_ptr->target_position[jnt_ctr] = joint_pos[jnt_ctr];
     }
-
+    std::cout<<"joint_pos 1 : "<<joint_pos[0]<<", joint_pos 2 : "<<joint_pos[1]<<", joint_pos 3 : "<<joint_pos[2]<<std::endl;
     return 0;
 }
 
-int changeSystemState()
+
+void Jog()
 {
-    std::cout << "Change state called\n";
-    if (system_data_ptr->request == 1)
+    app_data_ptr->drive_operation_mode = OperationModeState::POSITION_MODE;
+    while(commmand_data_ptr->jog_data.type == 0)
     {
-        switch (system_data_ptr->getSystemState())
-        {
-
-        case SystemState::POWER_OFF:
-        {
-            app_data_ptr->init_system = 0;
-
-            if (app_data_ptr->init_system == 1)
-            {
-                system_data_ptr->setSystemState(SystemState::INITIALIZING_SYSTEM);
-            }
-        }
-
-        case SystemState::INITIALIZING_SYSTEM:
-        {
-            app_data_ptr->initialize_drives = true;
-
-            app_data_ptr->init_hardware_check = 0;
-            
-            if (app_data_ptr->init_hardware_check == 1)
-            {
-                system_data_ptr->setSystemState(SystemState::HARWARE_CHECK);
-            }
-        }
-
-        case SystemState::HARWARE_CHECK:
-        {
-
-            app_data_ptr->init_ready_for_operation = 0;
-            if (app_data_ptr->init_ready_for_operation == 1)
-            {
-                system_data_ptr->setSystemState(SystemState::READY);
-            }
-        }
-
-        case SystemState::READY:
-        {
-        }
-        }
-
-    }
-    else if (system_data_ptr->request == -1)
-    {
-        system_data_ptr->setSystemState(SystemState::POWER_OFF);
+        jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 0);
+        if(app_data_ptr->trigger_error)
+            break;
     }
 
-    return 1;
+    while(commmand_data_ptr->jog_data.type == 1)
+    {
+        jog(commmand_data_ptr->jog_data.index, commmand_data_ptr->jog_data.dir, 1);
+        if(app_data_ptr->trigger_error)
+            break;
+    }
+
+    commmand_data_ptr->type = CommandType::NONE;
 }
+
 
 double jog(int index, int dir, int type)
 {
@@ -299,40 +295,17 @@ double jog(int index, int dir, int type)
     return 1;
 }
 
-double hand_control_jog(double start_pos[3], Eigen::Vector3d &eef_pos, Eigen::Matrix3d &eef_orient)
-{
-    // std::cout<<"eef_orient : \n"<<eef_orient<<std::endl;
-    // It has to be re written for Instruments
+double sterile_engagement(){
 
-    std::vector<double> current_pos, desired_pos;
-    current_pos.resize(6);
-    desired_pos.resize(6);
-    std::copy(std::begin(app_data_ptr->actual_position), std::end(app_data_ptr->actual_position), std::begin(current_pos));
+    double ini_pos[3], final_pos[3];
 
-    Eigen::Vector3d eef_pos_new;
-
-    eef_pos_new[0] = eef_pos[0] + 2 * (force_dim_ptr[0] - start_pos[0]);
-    eef_pos_new[1] = eef_pos[1] + 2 * (force_dim_ptr[1] - start_pos[1]);
-    eef_pos_new[2] = eef_pos[2] + 2 * (force_dim_ptr[2] - start_pos[2]);
-
-    std::cout << "updated eef_pos : \n"
-              << eef_pos_new << std::endl;
-
-    ik_solver.computeIK(eef_pos_new, eef_orient, current_pos, desired_pos);
-
-    double command_pos[6];
-    double command_vel[6] = {0, 0, 0, 0, 0, 0};
-
-    for (int jnt_ctr = 0; jnt_ctr < 6; jnt_ctr++)
-    {
-        // std::cout<<"jnt _ctr : "<<jnt_ctr<<", current_pso : "<<current_pos[jnt_ctr]<<", desired_pos : "<<desired_pos[jnt_ctr]<<std::endl;
-        command_pos[jnt_ctr] = desired_pos[jnt_ctr];
+    for (unsigned int jnt_ctr =0; jnt_ctr < 3; jnt_ctr++){
+        ini_pos[jnt_ctr] = app_data_ptr->actual_position[jnt_ctr];
+        final_pos[jnt_ctr] = ini_pos[jnt_ctr] + (2*M_PI + 0.02);
     }
 
-    write_to_drive(command_pos, command_vel);
-    usleep(1000);
+    pt_to_pt_mvmt(ini_pos, final_pos);
 
-    return 0;
 }
 
 int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
@@ -361,9 +334,6 @@ int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
     for (int jnt_ctr = 0; jnt_ctr < num_joints; jnt_ctr++)
     {
         double acc_dist, cruise_dist;
-
-        // std::cout<<"joint_vel : "<<joint_vel[jnt_ctr]<<", joint_acc : "<<joint_acc[jnt_ctr]<<std::endl;
-        // std::cout<<"final_pos : "<<final_pos[jnt_ctr]<<", ini_pos : "<<ini_pos[jnt_ctr]<<std::endl;
 
         double acc_time, cruise_time, local_time;
 
@@ -398,8 +368,6 @@ int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
             cruise_time = (joint_diff - 2 * acc_dist) / joint_vel[jnt_ctr];
             local_time = 2 * acc_time + cruise_time;
         }
-
-        // std::cout<<"local_time : "<<local_time<<std::endl;
 
         if (local_time > max_time)
         {
@@ -486,18 +454,6 @@ int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
                 current_pos[jnt_ctr] = final_pos[jnt_ctr];
             }
 
-            // if (jnt_ctr != 5)
-            // {
-            //     // std::cout<<current_pos[jnt_ctr]<<","<<current_vel[jnt_ctr]<<","<<current_acc[jnt_ctr]<<"," ;
-            // }
-            // else
-            // {
-            //     // std::cout<<current_pos[jnt_ctr]<<","<<current_vel[jnt_ctr]<<","<<current_acc[jnt_ctr]<<"\n";
-            // }
-
-            // if (jnt_ctr == 5){
-            //     std::cout<<current_pos[jnt_ctr]<<","<<current_vel[jnt_ctr]<<","<<current_acc[jnt_ctr]<<"\n";
-            // }
         }
 
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -506,10 +462,6 @@ int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
         double time_taken;
         time_taken = (end.tv_sec - start.tv_sec) * 1e9;
         time_taken = (time_taken + (end.tv_nsec - start.tv_nsec)) * 1e-9;
-
-        // cout << "Time taken by program is : " << fixed
-        //      << time_taken << setprecision(9);
-        // cout << " sec" << endl;
 
         write_to_drive(current_pos, current_vel);
 

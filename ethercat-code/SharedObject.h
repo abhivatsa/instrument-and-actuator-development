@@ -39,17 +39,17 @@ struct JointData
     bool instrument_detection_status;
 };
 
-enum DriveState
+enum class DriveState
 {
     INITIALIZE,
     NOT_READY_TO_SWITCH_ON,
     SWITCHED_ON,
     SWITCH_TO_OPERATION,
-    OPERATION_ENALBLED,
+    OPERATION_ENABLED,
     ERROR,
 };
 
-enum OperationModeState{
+enum class OperationModeState{
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
     TORQUE_MODE = 10,

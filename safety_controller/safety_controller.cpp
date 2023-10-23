@@ -94,13 +94,13 @@ int main()
     // }// main function will end if ever drive goes in error
 
 
-    SafetyStates state = SafetyStates::INITALIZE;
+    SafetyStates state = SafetyStates::INITIALIZE;
 
     while(1)
     {
         switch (state)
         {
-            case SafetyStates::INITALIZE:
+            case SafetyStates::INITIALIZE:
             {/* code */
                 system_state_data_ptr->safety_controller_enabled = true;
                 if(system_state_data_ptr->current_state == DriveState::NOT_READY_TO_SWITCH_ON)
@@ -161,12 +161,12 @@ int main()
             {
                 check_limits();
                 read_data();
+
                 if(app_data_ptr->switch_to_operation)// switch to operation? from motion planner
                 {   
                     system_state_data_ptr->switch_to_operation = true;
-                    if(system_state_data_ptr->current_state == DriveState::OPERATION_ENALBLED)
+                    if(system_state_data_ptr->current_state == DriveState::OPERATION_ENABLED)
                     {
-
                         state = SafetyStates::OPERATION;
                     }
                 }
@@ -174,9 +174,9 @@ int main()
             }
             case SafetyStates::OPERATION:
             {
-                if(system_state_data_ptr->current_state == DriveState::OPERATION_ENALBLED)
+                if(system_state_data_ptr->current_state == DriveState::OPERATION_ENABLED)
                 {
-                    app_data_ptr->operation_enalble_status = true;
+                    app_data_ptr->operation_enable_status = true;
                     // read write
                     check_limits();
                     read_data();
@@ -192,7 +192,7 @@ int main()
             }
             case SafetyStates::ERROR:
             {
-                if(system_state_data_ptr->current_state = DriveState::SWITCHED_ON)
+                if(system_state_data_ptr->current_state == DriveState::SWITCHED_ON)
                 {
                     state = SafetyStates::READY_FOR_OPERATION;
                 }
@@ -230,6 +230,7 @@ void write_data()
             joint_data_ptr->target_velocity[jnt_ctr] = app_data_ptr->target_velocity[jnt_ctr];
             joint_data_ptr->target_torque[jnt_ctr] = app_data_ptr->target_torque[jnt_ctr];
         }
+
     }
 }
 
@@ -257,7 +258,6 @@ int pos_limit_check(double *joint_pos)
         {
             // return -1; //TODO
         }
-        std::cout << "jnt_ctr : " << jnt_ctr << ", joint_pos[jnt_ctr] : " << joint_pos[jnt_ctr] << std::endl;
     }
     return 0;
 }
