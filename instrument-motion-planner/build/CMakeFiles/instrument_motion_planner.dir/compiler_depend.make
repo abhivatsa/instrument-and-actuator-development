@@ -215,6 +215,8 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
   /usr/include/c++/11/bits/ostream.tcc \
   /usr/include/c++/11/istream \
   /usr/include/c++/11/bits/istream.tcc \
+  ../instrument_jog.h \
+  ../pt_to_pt_planner.h \
   /usr/include/MotionPlanning/ForwardKinematics.h \
   /usr/include/c++/11/math.h \
   /usr/include/eigen3/Eigen/Dense \
@@ -466,6 +468,7 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
   /usr/include/eigen3/Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h \
   /usr/include/MotionPlanning/IK6AxisInline.h \
   /usr/include/MotionPlanning/Jacobian.h \
+  ../sterile_engagement.h \
   /usr/include/fcntl.h \
   /usr/include/x86_64-linux-gnu/bits/fcntl.h \
   /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
@@ -812,7 +815,13 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 
 /usr/include/c++/11/bitset:
 
-/usr/include/c++/11/pstl/execution_defs.h:
+/usr/include/c++/11/bits/stl_map.h:
+
+/usr/include/uchar.h:
+
+/usr/include/c++/11/cuchar:
+
+/usr/include/c++/11/ctgmath:
 
 /usr/include/c++/11/bits/vector.tcc:
 
@@ -833,10 +842,6 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 /usr/include/stdint.h:
 
 /usr/include/c++/11/bits/ptr_traits.h:
-
-/usr/include/c++/11/bits/enable_special_members.h:
-
-/usr/include/c++/11/bits/basic_ios.tcc:
 
 /usr/include/c++/11/bits/hashtable_policy.h:
 
@@ -875,6 +880,12 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 /usr/lib/gcc/x86_64-linux-gnu/11/include/emmintrin.h:
 
 /usr/include/MotionPlanning/ForwardKinematics.h:
+
+/usr/include/c++/11/bits/enable_special_members.h:
+
+/usr/include/c++/11/bits/basic_ios.tcc:
+
+../pt_to_pt_planner.h:
 
 /usr/include/c++/11/bits/istream.tcc:
 
@@ -974,10 +985,6 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 
 /usr/include/eigen3/Eigen/Core:
 
-/usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h:
-
-/usr/include/c++/11/bits/stl_construct.h:
-
 /usr/include/eigen3/Eigen/src/Core/ReturnByValue.h:
 
 /usr/include/c++/11/functional:
@@ -1013,6 +1020,12 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 /usr/include/ctype.h:
 
 /usr/include/c++/11/unordered_map:
+
+/usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h:
+
+/usr/include/c++/11/bits/stl_construct.h:
+
+../instrument_jog.h:
 
 /usr/include/c++/11/cctype:
 
@@ -1268,16 +1281,6 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 
 /usr/include/c++/11/bits/predefined_ops.h:
 
-/usr/include/c++/11/bits/stl_algo.h:
-
-/usr/include/c++/11/tr1/modified_bessel_func.tcc:
-
-/usr/include/eigen3/Eigen/src/Core/NestByValue.h:
-
-/usr/include/eigen3/Eigen/src/Core/BooleanRedux.h:
-
-/usr/include/eigen3/Eigen/src/Eigenvalues/GeneralizedEigenSolver.h:
-
 /usr/include/c++/11/cassert:
 
 /usr/include/c++/11/complex:
@@ -1464,6 +1467,18 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 
 /usr/include/c++/11/bits/string_view.tcc:
 
+/usr/include/c++/11/bits/stl_algo.h:
+
+/usr/include/c++/11/tr1/modified_bessel_func.tcc:
+
+/usr/include/eigen3/Eigen/src/Core/NestByValue.h:
+
+/usr/include/eigen3/Eigen/src/Core/BooleanRedux.h:
+
+/usr/include/eigen3/Eigen/src/Eigenvalues/GeneralizedEigenSolver.h:
+
+/usr/include/c++/11/pstl/execution_defs.h:
+
 /usr/include/strings.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h:
@@ -1604,9 +1619,9 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 
 /usr/include/c++/11/csignal:
 
-/usr/include/c++/11/bits/algorithmfwd.h:
-
 /usr/include/c++/11/bits/cxxabi_forced.h:
+
+/usr/include/c++/11/bits/algorithmfwd.h:
 
 /usr/include/eigen3/Eigen/src/Core/CwiseUnaryOp.h:
 
@@ -1757,6 +1772,8 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 /usr/include/eigen3/Eigen/src/Core/ArrayWrapper.h:
 
 /usr/include/eigen3/Eigen/src/Core/util/ReenableStupidWarnings.h:
+
+../sterile_engagement.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_statx.h:
 
@@ -1951,11 +1968,3 @@ CMakeFiles/instrument_motion_planner.dir/instrument_motion_planner.cpp.o: ../ins
 /usr/include/c++/11/cinttypes:
 
 /usr/include/c++/11/cstdalign:
-
-/usr/include/c++/11/ctgmath:
-
-/usr/include/c++/11/cuchar:
-
-/usr/include/c++/11/bits/stl_map.h:
-
-/usr/include/uchar.h:

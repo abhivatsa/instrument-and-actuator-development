@@ -1,26 +1,15 @@
+#ifndef INSTRUMENT_MOTION_PLANNER_H
+#define INSTRUMENT_MOTION_PLANNER_H
+
 #include <cmath>
 #include <unistd.h>
 #include <iostream>
 
-#include "MotionPlanning/ForwardKinematics.h"
-#include "MotionPlanning/IK6AxisInline.h"
-#include "MotionPlanning/Jacobian.h"
-
 int write_to_drive(double joint_pos[3], double joint_vel[3]);
-
-int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3]);
 
 int changeSystemState();
 
-double jog(int index, int dir, int type);
 
-double sterile_engagement();
-
-int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3]);
-
-double hand_control_jog(double start_pos[3], Eigen::Vector3d &eef_pos, Eigen::Matrix3d &eef_orient);
-
-void Jog();
 
 // structer for system data
 enum class SystemState
@@ -160,7 +149,7 @@ struct CommandData
     void setNone(){
         this->type = CommandType::NONE;
     }
-    
+
     CommandType type;
     struct
     {
@@ -209,3 +198,5 @@ SystemData *system_data_ptr;
 AppData *app_data_ptr;
 CommandData *commmand_data_ptr;
 ForceDimData *force_dim_ptr;
+
+#endif
