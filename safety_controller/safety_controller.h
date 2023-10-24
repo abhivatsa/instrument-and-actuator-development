@@ -122,6 +122,7 @@ struct SystemStateData
     {
         current_state = DriveState::INITIALIZE;
         drive_operation_mode = OperationModeState::POSITION_MODE;
+        state = SafetyStates::INITIALIZE;
         initialize_drives = false;
         switch_to_operation = false;
 
@@ -140,6 +141,7 @@ struct SystemStateData
 
     DriveState current_state;
     OperationModeState drive_operation_mode;
+    SafetyStates state;
     // Variables for Drive status
     bool status_switched_on;
     bool status_operation_enabled;

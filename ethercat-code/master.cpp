@@ -186,7 +186,12 @@ void cyclic_task()
                 if ((((drive_status | 65456) ^ 65471) == 0) || (((drive_status | 65456) ^ 65464) == 0))
                 {
                     system_state_data_ptr->current_state = DriveState::ERROR;
+                    std::cout<<"Drive inside error \n";
                     break;
+                }
+
+                if (system_state_data_ptr->current_state == DriveState::ERROR){
+                    std::cout<<"Drive inside error break didnt work \n";
                 }
 
                 domain1_command[jnt_ctr] = transition_to_switched_on(drive_status, domain1_command[jnt_ctr], jnt_ctr);
@@ -224,10 +229,6 @@ void cyclic_task()
                         joint_data_ptr->joint_position[jnt_ctr] = conv_count_to_rad(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].position_actual_value));
                         joint_data_ptr->joint_velocity[jnt_ctr] = conv_mrev_sec_to_rad_sec(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].velocity_actual_value));
                         joint_data_ptr->joint_torque[jnt_ctr] = 0;
-
-                        joint_data_ptr->target_position[jnt_ctr] = joint_data_ptr->joint_position[jnt_ctr];
-                        joint_data_ptr->target_velocity[jnt_ctr] = 0;
-                        joint_data_ptr->target_torque[jnt_ctr] = 0;
                     }
                     system_state_data_ptr->start_safety_check = true;
 
@@ -265,13 +266,19 @@ void cyclic_task()
                 read_drive_state(drive_status, jnt_ctr);
 
                 if ((((drive_status | 65456) ^ 65471) == 0) || ((drive_status | 65456) ^ 65464) == 0)
-                    {
-                        system_state_data_ptr->current_state = DriveState::ERROR;
-                    }
+                {
+                    system_state_data_ptr->current_state = DriveState::ERROR;
+                }
+
+                joint_data_ptr->target_position[jnt_ctr] = joint_data_ptr->joint_position[jnt_ctr];
+
+                std::cout<<"****************************************** "<<std::endl;
+                std::cout<<"joint_data_ptr->joint_position["<<jnt_ctr<<"] : "<<joint_data_ptr->joint_position[jnt_ctr]<<std::endl;
+                std::cout<<"joint_data_ptr->target_position["<<jnt_ctr<<"] : "<<joint_data_ptr->target_position[jnt_ctr]<<std::endl;
 
                 EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].controlword, 15);
                 EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].modes_of_operation, 8);
-                EC_WRITE_S32(domain1_pd + drive_offset[jnt_ctr].target_position, joint_data_ptr->joint_position[jnt_ctr]);
+                EC_WRITE_S32(domain1_pd + drive_offset[jnt_ctr].target_position, conv_radians_to_count(joint_data_ptr->joint_position[jnt_ctr]));
 
                 if (((drive_status | 65424) ^ 65463) == 0)
                 {
@@ -280,13 +287,14 @@ void cyclic_task()
                 }
             }
 
-            if (!(system_state_data_ptr->current_state == DriveState::ERROR)){
+            if (!(system_state_data_ptr->current_state == DriveState::ERROR))
+            {
 
                 system_state_data_ptr->current_state = system_state_data_ptr->drive_enable_for_operation[0] &&
-                                                           system_state_data_ptr->drive_enable_for_operation[1] &&
-                                                           system_state_data_ptr->drive_enable_for_operation[2]
-                                                       ? DriveState::OPERATION_ENABLED
-                                                       : DriveState::SWITCH_TO_OPERATION;
+                                                               system_state_data_ptr->drive_enable_for_operation[1] &&
+                                                               system_state_data_ptr->drive_enable_for_operation[2]
+                                                           ? DriveState::OPERATION_ENABLED
+                                                           : DriveState::SWITCH_TO_OPERATION;
             }
 
             break;
@@ -321,6 +329,10 @@ void cyclic_task()
                     }
 
                     // std::cout << "conv_radians_to_count(joint_data_ptr->target_position[jnt_ctr]) : " << conv_radians_to_count(joint_data_ptr->target_position[jnt_ctr]) << std::endl;
+
+                    std::cout<<"****************inside position mode \n";
+                    std::cout<<"joint_data_ptr->joint_position["<<jnt_ctr<<"] : "<<joint_data_ptr->joint_position[jnt_ctr]<<std::endl;
+                    std::cout<<"joint_data_ptr->target_position["<<jnt_ctr<<"] : "<<joint_data_ptr->target_position[jnt_ctr]<<std::endl;
 
                     EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].modes_of_operation, 8);
                     EC_WRITE_S32(domain1_pd + drive_offset[jnt_ctr].target_position, conv_radians_to_count(joint_data_ptr->target_position[jnt_ctr]));
@@ -358,19 +370,22 @@ void cyclic_task()
         case DriveState::ERROR:
         {
             // system_state_data_ptr->current_state = DriveState::SWITCHED_ON;
+            std::cout<<"Drive inside error state line365\n";
             DriveState local_state = DriveState::SWITCHED_ON;
+            system_state_data_ptr->state = SafetyStates::ERROR;
             for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
             {
                 uint16_t drive_status = EC_READ_U16(domain1_pd + drive_offset[jnt_ctr].statusword);
-
                 if ((((drive_status | 65456) ^ 65471) == 0) || ((drive_status | 65456) ^ 65464) == 0)
                 {
                     EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].controlword, 128);
                     local_state = DriveState::ERROR;
+                    std::cout<<"Drive inside error : "<<jnt_ctr<<"\n";
                     // system_state_data_ptr->current_state = DriveState::ERROR;
                 }
             }
             system_state_data_ptr->current_state = local_state;
+
             // system_state_data_ptr->current_state = DriveState::DISABLED; // or swichted on state
             break;
         }

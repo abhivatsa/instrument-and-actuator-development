@@ -93,12 +93,9 @@ int main()
     //     write_data();
     // }// main function will end if ever drive goes in error
 
-
-    SafetyStates state = SafetyStates::INITIALIZE;
-
     while(1)
     {
-        switch (state)
+        switch (system_state_data_ptr->state)
         {
             case SafetyStates::INITIALIZE:
             {/* code */
@@ -111,7 +108,7 @@ int main()
                         app_data_ptr->safety_process_status = true;
                         if(app_data_ptr->initialize_drives) // initialize drive? from  motion planner
                         {
-                            state = SafetyStates::INITIALIZE_DRIVES;
+                            system_state_data_ptr->state = SafetyStates::INITIALIZE_DRIVES;
                         }
                     }
                 }
@@ -119,6 +116,7 @@ int main()
             }
             case SafetyStates::INITIALIZE_DRIVES:
             {
+                std::cout<<"system_state_data_ptr->start_safety_check : "<<system_state_data_ptr->start_safety_check<<std::endl;
                 system_state_data_ptr->initialize_drives = true;
                 if(system_state_data_ptr->current_state == DriveState::SWITCHED_ON)
                 {
@@ -126,7 +124,7 @@ int main()
                     app_data_ptr->drive_initialized = true;
                     if(system_state_data_ptr->start_safety_check)
                     {
-                        state = SafetyStates::SAFETY_CHECK;
+                        system_state_data_ptr->state = SafetyStates::SAFETY_CHECK;
                     }
                 }
 
@@ -142,7 +140,7 @@ int main()
             {
                 if(check_limits())
                 {
-                    state = SafetyStates::READY_FOR_OPERATION;
+                    system_state_data_ptr->state = SafetyStates::READY_FOR_OPERATION;
                     app_data_ptr->trigger_error = false;
                 }
                 else
@@ -162,12 +160,17 @@ int main()
                 check_limits();
                 read_data();
 
+                for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++){
+                    app_data_ptr->target_position[jnt_ctr] = joint_data_ptr->joint_position[jnt_ctr];
+                    app_data_ptr->target_torque[jnt_ctr] = joint_data_ptr->joint_torque[jnt_ctr];
+                }
+
                 if(app_data_ptr->switch_to_operation)// switch to operation? from motion planner
                 {   
                     system_state_data_ptr->switch_to_operation = true;
                     if(system_state_data_ptr->current_state == DriveState::OPERATION_ENABLED)
                     {
-                        state = SafetyStates::OPERATION;
+                        system_state_data_ptr->state = SafetyStates::OPERATION;
                     }
                 }
                 break;
@@ -185,16 +188,17 @@ int main()
                 else if(system_state_data_ptr->current_state == DriveState::ERROR)
                 {
                     app_data_ptr->trigger_error = true;
-                    state = SafetyStates::ERROR;
+                    system_state_data_ptr->state = SafetyStates::ERROR;
                     // send signal to motion planner
                 }
                 break;
             }
             case SafetyStates::ERROR:
             {
+                app_data_ptr->setZero();
                 if(system_state_data_ptr->current_state == DriveState::SWITCHED_ON)
                 {
-                    state = SafetyStates::READY_FOR_OPERATION;
+                    system_state_data_ptr->state = SafetyStates::READY_FOR_OPERATION;
                 }
                 break;
             }   
