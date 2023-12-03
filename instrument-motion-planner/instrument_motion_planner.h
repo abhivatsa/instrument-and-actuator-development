@@ -1,23 +1,18 @@
+#ifndef INSTRUMENT_MOTION_PLANNER_H
+#define INSTRUMENT_MOTION_PLANNER_H
+
 #include <cmath>
 #include <unistd.h>
 #include <iostream>
 
-#include "MotionPlanning/ForwardKinematics.h"
-#include "MotionPlanning/IK6AxisInline.h"
-#include "MotionPlanning/Jacobian.h"
-
 int write_to_drive(double joint_pos[3], double joint_vel[3]);
-
-int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3]);
 
 int changeSystemState();
 
-double jog(int index, int dir, int type);
 
-double hand_control_jog(double start_pos[3], Eigen::Vector3d &eef_pos, Eigen::Matrix3d &eef_orient);
 
 // structer for system data
-enum SystemState
+enum class SystemState
 {
     POWER_OFF,
     INITIALIZING_SYSTEM,
@@ -28,7 +23,7 @@ enum SystemState
     ERROR
 };
 
-enum ActuatorState
+enum class ActuatorState
 {
     NONE,
     STERILE_MOUNTED,
@@ -37,7 +32,7 @@ enum ActuatorState
     INSTRUMENT_ENGAGED
 };
 
-enum CommandType
+enum class CommandType
 {
     NONE,
     JOG,
@@ -46,7 +41,7 @@ enum CommandType
     INSTRUMENT_ENGAGEMENT
 };
 
-enum OperationModeState
+enum class OperationModeState
 {
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
@@ -60,6 +55,13 @@ struct AppData
         switch_to_operation = false;
         initialize_drives = false;
         initialize_system = false;
+        trigger_error = false;
+        safety_process_status = false;
+        drive_initialized = false;
+        safety_check_done = false;
+        reset_error = false;
+        operation_enable_status = false;
+
         for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
             actual_position[jnt_ctr] = 0;
@@ -74,10 +76,6 @@ struct AppData
             sterile_detection = false;
             instrument_detection = false;
             simulation_mode = false;
-
-            init_system = -1;
-            init_hardware_check = -1;
-            init_ready_for_operation = -1;
         }
     }
 
@@ -94,27 +92,36 @@ struct AppData
     bool instrument_detection;
     bool simulation_mode;
 
-    int init_system;
-    int init_hardware_check;
-    int init_ready_for_operation;
-
+    bool trigger_error;
+    bool safety_process_status;
     bool initialize_system;
     bool initialize_drives;
+    bool drive_initialized;
     bool switch_to_operation;
+    bool safety_check_done;
+    bool operation_enable_status;
+    bool reset_error;
 };
 
 struct SystemData
 {
     SystemState getSystemState() const { return system_state; }
-    void setSystemState(SystemState state) { system_state = state; }
+    void setSystemState(SystemState state) { previous_state = system_state; system_state = state; }
     ActuatorState getActuatorState() const { return actuator_state; }
     void setActuatorState(ActuatorState state) {actuator_state = state; }
     void powerOn() { request = system_state == SystemState::POWER_OFF ? 1 : 0; }
     void powerOff() { request = system_state == SystemState::READY ? -1 : 0; }
+
+    void resetError(){ 
+        if(previous_state == SystemState::IN_EXECUTION)
+            previous_state = SystemState::READY;
+        system_state = previous_state; 
+        }
     int request = 0;
 
 private:
     SystemState system_state = SystemState::POWER_OFF;
+    SystemState previous_state = SystemState::POWER_OFF;
     ActuatorState actuator_state = ActuatorState::NONE;
 };
 
@@ -139,6 +146,10 @@ struct CommandData
     {
         this->type = CommandType::INSTRUMENT_ENGAGEMENT;
     }
+    void setNone(){
+        this->type = CommandType::NONE;
+    }
+
     CommandType type;
     struct
     {
@@ -187,3 +198,5 @@ SystemData *system_data_ptr;
 AppData *app_data_ptr;
 CommandData *commmand_data_ptr;
 ForceDimData *force_dim_ptr;
+
+#endif

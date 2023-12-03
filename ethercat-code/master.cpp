@@ -257,11 +257,22 @@ void Master::cyclicTask()
 
                 readDriveState(drive_status, jnt_ctr);
 
+                read_drive_state(drive_status, jnt_ctr);
+
                 if ((((drive_status | 65456) ^ 65471) == 0) || (((drive_status | 65456) ^ 65464) == 0))
                 {
                     system_state_data_ptr->current_state = DriveState::ERROR;
+<<<<<<< HEAD
                     std::cout << "Drive inside error \n";
                     break;
+=======
+                    std::cout<<"Drive inside error \n";
+                    break;
+                }
+
+                if (system_state_data_ptr->current_state == DriveState::ERROR){
+                    std::cout<<"Drive inside error break didnt work \n";
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
                 }
 
                 if (system_state_data_ptr->current_state == DriveState::ERROR)
@@ -277,6 +288,7 @@ void Master::cyclicTask()
 
             if (!(system_state_data_ptr->current_state == DriveState::ERROR))
             {
+<<<<<<< HEAD
                 bool drives_in_switched_on = driveSwitchedOn[0] &&
                                                      driveSwitchedOn[1] &&
                                                      driveSwitchedOn[2]
@@ -304,6 +316,47 @@ void Master::cyclicTask()
                         }
                         else
                         {
+=======
+                std::cout << "************************** \n";
+
+                std::cout << "drive_switched_on[0] " << drive_switched_on[0] << std::endl;
+                std::cout << "drive_switched_on[1] " << drive_switched_on[1] << std::endl;
+                std::cout << "drive_switched_on[2] " << drive_switched_on[2] << std::endl;
+
+                // system_state_data_ptr->current_state = drive_switched_on[0] &&
+                //                                                drive_switched_on[1] &&
+                //                                                drive_switched_on[2]
+                //                                            ? DriveState::SAFETY_CONTROLLER_ENABLED
+                //                                            : DriveState::SWITCHED_ON;
+
+                bool drives_in_switched_on = drive_switched_on[0] &&
+                                                     drive_switched_on[1] &&
+                                                     drive_switched_on[2]
+                                                 ? true
+                                                 : false;
+
+                std::cout << "drives_in_switched_on : " << drives_in_switched_on << std::endl;
+
+                if (drives_in_switched_on)
+                {
+                    for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+                    {
+                        joint_data_ptr->joint_position[jnt_ctr] = conv_count_to_rad(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].position_actual_value));
+                        joint_data_ptr->joint_velocity[jnt_ctr] = conv_mrev_sec_to_rad_sec(EC_READ_S32(domain1_pd + drive_offset[jnt_ctr].velocity_actual_value));
+                        joint_data_ptr->joint_torque[jnt_ctr] = 0;
+                    }
+                    system_state_data_ptr->start_safety_check = true;
+
+                    std::cout << "system_state_data_ptr->safety_check_done: " << system_state_data_ptr->safety_check_done << std::endl;
+
+                    if (system_state_data_ptr->safety_check_done)
+                    {
+                        std::cout << "system_state_data_ptr->trigger_error_mode : " << system_state_data_ptr->trigger_error_mode << std::endl;
+                        if (system_state_data_ptr->trigger_error_mode)
+                            system_state_data_ptr->current_state = DriveState::ERROR;
+                        else
+                        {
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
                             if (system_state_data_ptr->switch_to_operation)
                             {
                                 system_state_data_ptr->current_state = DriveState::SWITCH_TO_OPERATION;
@@ -317,19 +370,47 @@ void Master::cyclicTask()
                     system_state_data_ptr->trigger_error_mode = false;
                 }
             }
+<<<<<<< HEAD
+=======
+
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
             break;
         }
         case DriveState::SWITCH_TO_OPERATION: // Automatic switch to operation enabled after enabling all motors
         {
+<<<<<<< HEAD
             if (system_state_data_ptr->trigger_error_mode)
             {
                 run_ethercat_loop = false;
             }
             else
             {
+=======
+            std::cout << "Drive : SWITCH_TO_OPERATION" << std::endl;
+            for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+            {
+                uint16_t drive_status = EC_READ_U16(domain1_pd + drive_offset[jnt_ctr].statusword);
+                read_drive_state(drive_status, jnt_ctr);
+
+                if ((((drive_status | 65456) ^ 65471) == 0) || ((drive_status | 65456) ^ 65464) == 0)
+                {
+                    system_state_data_ptr->current_state = DriveState::ERROR;
+                }
+
+                joint_data_ptr->target_position[jnt_ctr] = joint_data_ptr->joint_position[jnt_ctr];
+
+                std::cout<<"****************************************** "<<std::endl;
+                std::cout<<"joint_data_ptr->joint_position["<<jnt_ctr<<"] : "<<joint_data_ptr->joint_position[jnt_ctr]<<std::endl;
+                std::cout<<"joint_data_ptr->target_position["<<jnt_ctr<<"] : "<<joint_data_ptr->target_position[jnt_ctr]<<std::endl;
+
+                EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].controlword, 15);
+                EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].modes_of_operation, 8);
+                EC_WRITE_S32(domain1_pd + drive_offset[jnt_ctr].target_position, conv_radians_to_count(joint_data_ptr->joint_position[jnt_ctr]));
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
 
                 for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
                 {
+<<<<<<< HEAD
                     uint16_t drive_status = EC_READ_U16(domainPd + driveOffset[jnt_ctr].statusword);
                     readDriveState(drive_status, jnt_ctr);
 
@@ -361,6 +442,23 @@ void Master::cyclicTask()
                 }
             }
 
+=======
+                    system_state_data_ptr->drive_enable_for_operation[jnt_ctr] = true;
+                    std::cout << "drive_enable_for_operation [" << jnt_ctr << "] : " << true << std::endl;
+                }
+            }
+
+            if (!(system_state_data_ptr->current_state == DriveState::ERROR))
+            {
+
+                system_state_data_ptr->current_state = system_state_data_ptr->drive_enable_for_operation[0] &&
+                                                               system_state_data_ptr->drive_enable_for_operation[1] &&
+                                                               system_state_data_ptr->drive_enable_for_operation[2]
+                                                           ? DriveState::OPERATION_ENABLED
+                                                           : DriveState::SWITCH_TO_OPERATION;
+            }
+
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
             break;
         }
         case DriveState::OPERATION_ENABLED:
@@ -392,8 +490,19 @@ void Master::cyclicTask()
                         system_state_data_ptr->current_state = DriveState::ERROR;
                     }
 
+<<<<<<< HEAD
                     EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].modes_of_operation, 8);
                     EC_WRITE_S32(domainPd + driveOffset[jnt_ctr].target_position, joint_data_ptr->target_position[jnt_ctr]);
+=======
+                    // std::cout << "conv_radians_to_count(joint_data_ptr->target_position[jnt_ctr]) : " << conv_radians_to_count(joint_data_ptr->target_position[jnt_ctr]) << std::endl;
+
+                    std::cout<<"****************inside position mode \n";
+                    std::cout<<"joint_data_ptr->joint_position["<<jnt_ctr<<"] : "<<joint_data_ptr->joint_position[jnt_ctr]<<std::endl;
+                    std::cout<<"joint_data_ptr->target_position["<<jnt_ctr<<"] : "<<joint_data_ptr->target_position[jnt_ctr]<<std::endl;
+
+                    EC_WRITE_U16(domain1_pd + drive_offset[jnt_ctr].modes_of_operation, 8);
+                    EC_WRITE_S32(domain1_pd + drive_offset[jnt_ctr].target_position, conv_radians_to_count(joint_data_ptr->target_position[jnt_ctr]));
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
                 }
 
                 break;
@@ -428,16 +537,26 @@ void Master::cyclicTask()
         case DriveState::ERROR:
         {
             // system_state_data_ptr->current_state = DriveState::SWITCHED_ON;
+<<<<<<< HEAD
             std::cout << "Drive inside error state line365\n";
             DriveState local_state = DriveState::SWITCHED_ON;
             system_state_data_ptr->state = SafetyStates::ERROR;
             for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
             {
                 uint16_t drive_status = EC_READ_U16(domainPd + driveOffset[jnt_ctr].statusword);
+=======
+            std::cout<<"Drive inside error state line365\n";
+            DriveState local_state = DriveState::SWITCHED_ON;
+            system_state_data_ptr->state = SafetyStates::ERROR;
+            for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+            {
+                uint16_t drive_status = EC_READ_U16(domain1_pd + drive_offset[jnt_ctr].statusword);
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
                 if ((((drive_status | 65456) ^ 65471) == 0) || ((drive_status | 65456) ^ 65464) == 0)
                 {
                     EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].controlword, 128);
                     local_state = DriveState::ERROR;
+                    std::cout<<"Drive inside error : "<<jnt_ctr<<"\n";
                     // system_state_data_ptr->current_state = DriveState::ERROR;
                 }
             }
@@ -588,8 +707,51 @@ void Master::run()
     signal(SIGINT, Master::signalHandler);
 
 
+<<<<<<< HEAD
     // Set real-time priority
     setRealtimePriority();
+=======
+    /* open the shared memory object */
+    shm_fd_jointData = shm_open("JointData", O_CREAT | O_RDWR, 0666);
+    shm_fd_systemStateData = shm_open("SystemStateData", O_CREAT | O_RDWR, 0666);
+
+    ftruncate(shm_fd_jointData, SIZE_JointData);
+    ftruncate(shm_fd_systemStateData, SIZE_SystemStateData);
+
+    joint_data_ptr = static_cast<JointData *>(mmap(0, SIZE_JointData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_jointData, 0));
+    system_state_data_ptr = static_cast<SystemStateData *>(mmap(0, SIZE_SystemStateData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_systemStateData, 0));
+
+    joint_data_ptr->setZero();
+    system_state_data_ptr->setZero();
+
+    printf("Waiting for Safety Controller to get Started ...\n");
+    while (!system_state_data_ptr->safety_controller_enabled)
+    {
+    }
+
+    printf("Safety Controller Started \n");
+
+    /* Set priority */
+
+    struct sched_param param = {};
+    param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+
+    printf("Using priority %i.", param.sched_priority);
+    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1)
+    {
+        perror("sched_setscheduler failed");
+    }
+
+    /* Lock memory */
+
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
+    {
+        fprintf(stderr, "Warning: Failed to lock memory: %s\n",
+                strerror(errno));
+    }
+
+    stack_prefault();
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
 
     // Set real-time interval for the master
     ecrt_master_set_send_interval(master, 1000);

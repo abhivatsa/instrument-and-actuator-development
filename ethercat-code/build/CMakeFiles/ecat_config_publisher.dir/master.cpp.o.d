@@ -1,7 +1,7 @@
 CMakeFiles/ecat_config_publisher.dir/master.cpp.o: \
- /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/master.cpp \
+ /home/abhishek/Documents/instrument-devel-app/ethercat-code/master.cpp \
  /usr/include/stdc-predef.h \
- /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/master.h \
+ /home/abhishek/Documents/instrument-devel-app/ethercat-code/master.h \
  /usr/include/errno.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -186,7 +186,7 @@ CMakeFiles/ecat_config_publisher.dir/master.cpp.o: \
  /usr/include/c++/11/bits/basic_ios.tcc \
  /usr/include/c++/11/bits/ostream.tcc /usr/include/c++/11/istream \
  /usr/include/c++/11/bits/istream.tcc \
- /home/abhishek/Documents/instrument-and-actuator-development/ethercat-code/SharedObject.h \
+ /home/abhishek/Documents/instrument-devel-app/ethercat-code/SharedObject.h \
  /usr/include/c++/11/stdlib.h /usr/include/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \

@@ -6,31 +6,31 @@
 #include "MotionPlanning/IK6AxisInline.h"
 #include "MotionPlanning/Jacobian.h"
 
-enum DriveState
+enum class DriveState
 {
     INITIALIZE,
     NOT_READY_TO_SWITCH_ON,
     SWITCHED_ON,
     SWITCH_TO_OPERATION,
-    OPERATION_ENALBLED,
+    OPERATION_ENABLED,
     ERROR,
 };
 
-enum OperationModeState
+enum class OperationModeState
 {
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
     TORQUE_MODE = 10,
 };
 
-enum SafetyStates
+enum class SafetyStates
 {
-    INITALIZE,
+    INITIALIZE,
     INITIALIZE_DRIVES,
     SAFETY_CHECK,
     READY_FOR_OPERATION,
     OPERATION,
-    ERROR
+    ERROR,
 };
 
 struct JointData
@@ -73,8 +73,8 @@ struct AppData
         drive_initialized = false;
         safety_check_done = false;
         reset_error = false;
-        operation_enalble_status = false;
-        
+        operation_enable_status = false;
+
         for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
         {
             actual_position[jnt_ctr] = 0;
@@ -112,15 +112,17 @@ struct AppData
     bool drive_initialized;
     bool switch_to_operation;
     bool safety_check_done;
-    bool operation_enalble_status;
+    bool operation_enable_status;
     bool reset_error;
 };
 
 struct SystemStateData
 {
-    void setZero(){
+    void setZero()
+    {
         current_state = DriveState::INITIALIZE;
         drive_operation_mode = OperationModeState::POSITION_MODE;
+        state = SafetyStates::INITIALIZE;
         initialize_drives = false;
         switch_to_operation = false;
 
@@ -131,30 +133,32 @@ struct SystemStateData
 
         safety_check_done = false;
         start_safety_check = false;
-        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++){
+        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+        {
             drive_enable_for_operation[jnt_ctr] = false;
         }
     }
 
     DriveState current_state;
     OperationModeState drive_operation_mode;
+    SafetyStates state;
     // Variables for Drive status
-    bool status_switched_on; 
+    bool status_switched_on;
     bool status_operation_enabled;
 
     // To determine where safety Code started Running
-    bool safety_controller_enabled; 
+    bool safety_controller_enabled;
 
     // both Variables ghas to Come from Safety Code
-    bool trigger_error_mode;   // Chaged from safety controller 
-    
+    bool trigger_error_mode; // Chaged from safety controller
+
     // Variables to initialize and check the status of safety code at 1000Hz
     bool start_safety_check;
     bool safety_check_done;
 
     bool initialize_drives;
     bool switch_to_operation;
-    
+
     bool drive_enable_for_operation[3];
 };
 

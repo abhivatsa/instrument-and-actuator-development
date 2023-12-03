@@ -45,8 +45,12 @@ enum class DriveState
     ERROR,
 };
 
+<<<<<<< HEAD
 enum class OperationModeState
 {
+=======
+enum class OperationModeState{
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
     TORQUE_MODE = 10,
@@ -85,7 +89,12 @@ struct SystemStateData
     DriveState current_state;
     OperationModeState drive_operation_mode;
     SafetyStates state;
+<<<<<<< HEAD
     bool status_switched_on;
+=======
+    // Variables for Drive status
+    bool status_switched_on; 
+>>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
     bool status_operation_enabled;
     bool safety_controller_enabled;
     bool trigger_error_mode;
