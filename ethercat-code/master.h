@@ -14,26 +14,13 @@
 #include "ecrt.h"
 #include "SharedObject.h"
 
-<<<<<<< HEAD
 // Define your EtherCAT constants here
-=======
-/****************************************************************************/
-
-#define DOMAIN1_POSITION 0
->>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
 #define DOMAIN1_START 1
 #define DOMAIN1_END (DOMAIN1_START + NUM_JOINTS)
 
 // Example definition, replace it with your actual slave configuration
 #define ingeniaDenalliXcr 0x0000029c, 0x03831002
 
-<<<<<<< HEAD
-=======
-/****************************************************************************/
-#define CLOCK_TO_USE CLOCK_MONOTONIC
-// #define MEASURE_TIMING 0
-/** Task period in ns. */
->>>>>>> d312dfc19e8e814b2a3aa21d0d209afe7fb91b0f
 #define PERIOD_NS (2000000)
 #define NSEC_PER_SEC (1000000000)
 #define FREQUENCY (NSEC_PER_SEC / PERIOD_NS)
