@@ -11,6 +11,9 @@
 #include <sys/mman.h>
 #include <sched.h>
 #include <stdbool.h>
+#include <csignal>
+#include <cstdlib>
+#include <cstdint>
 #include "ecrt.h"
 #include "SharedObject.h"
 
@@ -34,6 +37,8 @@
 
 #define TIMESPEC2NS(T) ((uint64_t)(T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
 
+volatile sig_atomic_t exitFlag = 0;
+
 struct JointPdos {
     unsigned int statusword;
     unsigned int mode_of_operation_display;
@@ -49,6 +54,27 @@ struct JointPdos {
     unsigned int target_velocity;
     unsigned int torque_offset;
     unsigned int velocity_offset;
+};
+
+enum class ControlWordValues : uint16_t {
+    CW_SHUTDOWN             = 0x06,
+    CW_SWITCH_ON            = 0x07,
+    CW_ENABLE_OPERATION     = 0x0F,
+    CW_DISABLE_VOLTAGE      = 0x00,
+    CW_QUICK_STOP           = 0x02,
+    // Add more control word values as needed
+};
+
+enum class StatusWordValues : uint16_t {
+    SW_NOT_READY_TO_SWITCH_ON = 0x0000,
+    SW_SWITCH_ON_DISABLED = 0x0040,
+    SW_READY_TO_SWITCH_ON = 0x0021,
+    SW_SWITCHED_ON = 0x0023,
+    SW_OPERATION_ENABLED = 0x0027,
+    SW_QUICK_STOP_ACTIVE = 0x0007,
+    SW_FAULT_REACTION_ACTIVE = 0x000F,
+    SW_FAULT = 0x0008
+    // Add more status word values as needed
 };
 
 class Master {
@@ -74,17 +100,19 @@ private:
     SystemStateData *systemStateDataPtr;
 
     void updateState();
-    void readDriveState(uint16_t status, int joint_num);
+    void readDriveState(uint16_t statusword, int joint_num);
 
     uint16_t transitionToSwitchedOn(uint16_t status, uint16_t command, int joint_num);
     uint16_t transitionToOperationEnabled(uint16_t status, uint16_t command, int joint_num);
     uint16_t transitionToFaultState(uint16_t status, uint16_t command, int joint_num);
 
+    void transitionToState(ControlWordValues value, int jnt_ctr); 
+
     struct timespec timespecAdd(struct timespec time1, struct timespec time2);
 
     void checkDomainState();
     void checkMasterState();
-    void cyclicTask();
+    
     
     void sdoMapping(ec_slave_config_t *sc, int jnt_ctr);
     void pdoMapping(ec_slave_config_t *sc);
@@ -98,6 +126,24 @@ private:
     void stackPrefault();
     void setRealtimePriority();
 
-    void signalHandler(int signum);
+    static void signalHandler(int signum);
+    
+    // Organized Cyclic Task Structure
+    void cyclicTask();
+    void performCyclicTasks();
+    void performPeriodicTasks();
+    void handleDriveStates();
+    void initializeDrives();
+    void enableDrivesIfInitialized();
+    void handleSwitchedOnState();
+    void updateJointDataInSwitchedOnState();
+    void handleSafetyCheckDone();
+    void handleSwitchToOperationState();
+    void updateSwitchToOperationState();
+    void handleOperationEnabledState();
+    void handlePositionMode();
+    void handleVelocityMode();
+    void handleTorqueMode();
+    void handleErrorState();
 
 };
