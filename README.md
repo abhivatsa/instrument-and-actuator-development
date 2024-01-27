@@ -36,7 +36,7 @@ Follow these steps to configure and build EtherCAT on your system:
 3. Configure EtherCAT with the desired options. For example:
 
     ```bash
-    ./configure --enable-sii-assign --enable-hrtimer --enable-cycles --disable-eoe --with-systemdsystemunitdir=/etc/systemd/system --disable-8139too
+    ./configure --enable-sii-assign --enable-hrtimer --enable-cycles --disable-eoe --disable-8139too
     ```
 
    Make sure to adjust the configuration options based on your specific requirements.
