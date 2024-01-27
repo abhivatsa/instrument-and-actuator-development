@@ -1,15 +1,3 @@
-Install Ethercat with the following steps
-sudo apt-get install autoconf
-sudo apt-get install libtool
-sudo apt-get install build-essential
-./bootstrap
-check the help with this command
-./configure --help
-configure the ethercat with the following
-./configure --enable-sii-assign --enable-hrtimer --enable-cycles --disable-eoe  --with-systemdsystemunitdir=/etc/systemd/system --disable-8139too
-
-make all modules
-
 # EtherCAT Installation Guide
 
 This guide provides step-by-step instructions to install EtherCAT on your system. Follow these instructions to ensure a smooth installation process.
