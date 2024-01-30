@@ -1,20 +1,19 @@
-#include <master.h>
+#include "cyclicTask.h"
 using namespace std;
 
 int main(int argc, char **argv)
 {
     // Create an instance of the Master class
-    Master master;
+    EthercatMaster ecat_master;
 
     // Run the main functionality of your program
-    master.run();
+    ecat_master.run();
 
     return 0; // Indicate successful program execution
 }
 
-Master::Master() : counter(0), syncRefCounter(0), cycleTime({0, PERIOD_NS}), allDriveEnabled(false)
-{
-
+EthercatMaster::EthercatMaster() : counter(0), syncRefCounter(0), cycleTime({0, PERIOD_NS}), allDriveEnabled(false)
+{    
     master = ecrt_request_master(0);
     if (!master)
     {
@@ -69,7 +68,6 @@ Master::Master() : counter(0), syncRefCounter(0), cycleTime({0, PERIOD_NS}), all
             {0, jnt_ctr, ingeniaDenalliXcr, 0x60B2, 0, &driveOffset[jnt_ctr].torque_offset},
             {0, jnt_ctr, ingeniaDenalliXcr, 0x60B1, 0, &driveOffset[jnt_ctr].velocity_offset}, // 60B2 0 torque offset
             {}
-
         };
 
         ecrt_slave_config_dc(sc, 0x0300, PERIOD_NS, 0, 0, 0);
@@ -98,7 +96,7 @@ Master::Master() : counter(0), syncRefCounter(0), cycleTime({0, PERIOD_NS}), all
     configureSharedMemory();
 }
 
-Master::~Master()
+EthercatMaster::~EthercatMaster()
 {
 
     // Release EtherCAT master resources
@@ -119,17 +117,103 @@ Master::~Master()
     }
 }
 
-void Master::updateState()
+void EthercatMaster::run()
 {
-    // ... (existing code)
+
+    // Activate the master
+    printf("Activating master...\n");
+    if (ecrt_master_activate(master))
+    {
+        perror("Error activating master");
+        // Handle the error appropriately based on your application's requirements
+    }
+
+    /** Returns the domain's process data.
+     *
+     * - In kernel context: If external memory was provided with
+     * ecrt_domain_external_memory(), the returned pointer will contain the
+     * address of that memory. Otherwise it will point to the internally allocated
+     * memory. In the latter case, this method may not be called before
+     * ecrt_master_activate().
+     *
+     * - In userspace context: This method has to be called after
+     * ecrt_master_activate() to get the mapped domain process data memory.
+     *
+     * \return Pointer to the process data memory.
+     */
+
+    if (!(domainPd = ecrt_domain_data(domain)))
+    {
+        return;
+    }
+
+    // Set CPU affinity for real-time thread
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(0, &cpuset); // Set to the desired CPU core
+
+    if (sched_setaffinity(0, sizeof(cpuset), &cpuset) == -1)
+    {
+        perror("Error setting CPU affinity");
+        // Handle the error appropriately based on your application's requirements
+    }
+
+    // Lock memory
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
+    {
+        fprintf(stderr, "Warning: Failed to lock memory: %s\n", strerror(errno));
+        // Handle the error appropriately based on your application's requirements
+    }
+
+    stackPrefault();
+
+    // Register signal handler to gracefully stop the program
+    signal(SIGINT, EthercatMaster::signalHandler);
+
+    struct sched_param param = {};
+    param.sched_priority = 49;
+
+    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1)
+    {
+        perror("sched_setscheduler failed");
+    }
+
+    // Set real-time interval for the master
+    ecrt_master_set_send_interval(master, 1000);
+
+    printf("Starting RT task with dt=%u ns.\n", PERIOD_NS);
+
+    struct timespec wakeupTime;
+    clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
+    wakeupTime.tv_sec += 1; // Start in the future
+    wakeupTime.tv_nsec = 0;
+
+    int ret;
+
+    // Real-time loop
+    while (1)
+    {
+        ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeupTime, NULL);
+        if (ret)
+        {
+            fprintf(stderr, "clock_nanosleep(): %s\n", strerror(ret));
+            // Handle the error appropriately based on your application's requirements
+            break;
+        }
+
+        cyclicTask();
+
+        wakeupTime.tv_nsec += PERIOD_NS;
+        while (wakeupTime.tv_nsec >= NSEC_PER_SEC)
+        {
+            wakeupTime.tv_nsec -= NSEC_PER_SEC;
+            wakeupTime.tv_sec++;
+        }
+    }
 }
 
-struct timespec Master::timespecAdd(struct timespec time1, struct timespec time2)
-{
-    // ... (existing code)
-}
 
-void Master::readDriveState(uint16_t statusword, int joint_num)
+void EthercatMaster::readDriveState(uint16_t statusword, int joint_num)
 {
 
     // Check if the drive is in the Operation Enable state
@@ -191,7 +275,7 @@ void Master::readDriveState(uint16_t statusword, int joint_num)
     // Note: This is a general interpretation and may need to be adjusted based on the drive's documentation.
 }
 
-void Master::checkDomainState()
+void EthercatMaster::checkDomainState()
 {
     // cout << "check_domain_state" << endl;
     ec_domain_state_t ds;
@@ -210,7 +294,7 @@ void Master::checkDomainState()
     domainState = ds;
 }
 
-void Master::checkMasterState()
+void EthercatMaster::checkMasterState()
 {
     // cout << "check_master_state" << endl;
     ec_master_state_t ms;
@@ -233,18 +317,13 @@ void Master::checkMasterState()
     masterState = ms;
 }
 
-void Master::stackPrefault()
+void EthercatMaster::stackPrefault()
 {
     unsigned char dummy[MAX_SAFE_STACK];
     memset(dummy, 0, MAX_SAFE_STACK);
 }
 
-void Master::sdoMapping(ec_slave_config_t *sc, int jnt_ctr)
-{
-    // ... (existing code)
-}
-
-void Master::pdoMapping(ec_slave_config_t *sc)
+void EthercatMaster::pdoMapping(ec_slave_config_t *sc)
 {
     /* Define RxPdo */
     ecrt_slave_config_sync_manager(sc, 2, EC_DIR_OUTPUT, EC_WD_ENABLE);
@@ -291,96 +370,7 @@ void Master::pdoMapping(ec_slave_config_t *sc)
     ecrt_slave_config_pdo_mapping_add(sc, 0x1A01, 0x603F, 0, 16); /* 0x603F:0/16bits, Error Code */
 }
 
-void Master::run()
-{
-    // Set CPU affinity for real-time thread
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(0, &cpuset); // Set to the desired CPU core
-
-    if (sched_setaffinity(0, sizeof(cpuset), &cpuset) == -1)
-    {
-        perror("Error setting CPU affinity");
-        // Handle the error appropriately based on your application's requirements
-    }
-
-    // Lock memory
-    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
-    {
-        fprintf(stderr, "Warning: Failed to lock memory: %s\n", strerror(errno));
-        // Handle the error appropriately based on your application's requirements
-    }
-
-    stackPrefault();
-
-    // Activate the master
-    printf("Activating master...\n");
-    if (ecrt_master_activate(master))
-    {
-        perror("Error activating master");
-        // Handle the error appropriately based on your application's requirements
-    }
-
-    /** Returns the domain's process data.
-     *
-     * - In kernel context: If external memory was provided with
-     * ecrt_domain_external_memory(), the returned pointer will contain the
-     * address of that memory. Otherwise it will point to the internally allocated
-     * memory. In the latter case, this method may not be called before
-     * ecrt_master_activate().
-     *
-     * - In userspace context: This method has to be called after
-     * ecrt_master_activate() to get the mapped domain process data memory.
-     *
-     * \return Pointer to the process data memory.
-     */
-
-    if (!(domainPd = ecrt_domain_data(domain)))
-    {
-        return;
-    }
-
-    // Register signal handler to gracefully stop the program
-    signal(SIGINT, Master::signalHandler);
-
-    // Set real-time priority
-    setRealtimePriority();
-
-    // Set real-time interval for the master
-    ecrt_master_set_send_interval(master, 1000);
-
-    printf("Starting RT task with dt=%u ns.\n", PERIOD_NS);
-
-    struct timespec wakeupTime;
-    clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
-    wakeupTime.tv_sec += 1; // Start in the future
-    wakeupTime.tv_nsec = 0;
-
-    int ret;
-
-    // Real-time loop
-    while (1)
-    {
-        ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeup_time, NULL);
-        if (ret)
-        {
-            fprintf(stderr, "clock_nanosleep(): %s\n", strerror(ret));
-            // Handle the error appropriately based on your application's requirements
-            break;
-        }
-
-        cyclicTask();
-
-        wakeup_time.tv_nsec += PERIOD_NS;
-        while (wakeup_time.tv_nsec >= NSEC_PER_SEC)
-        {
-            wakeup_time.tv_nsec -= NSEC_PER_SEC;
-            wakeup_time.tv_sec++;
-        }
-    }
-}
-
-void Master::signalHandler(int signum)
+void EthercatMaster::signalHandler(int signum)
 {
 
     if (signum == SIGINT)
@@ -390,7 +380,7 @@ void Master::signalHandler(int signum)
     }
 }
 
-void Master::configureSharedMemory()
+void EthercatMaster::configureSharedMemory()
 {
     int shm_fd_jointData;
     int shm_fd_systemStateData;
@@ -404,7 +394,7 @@ void Master::configureSharedMemory()
     initializeSharedData();
 }
 
-void Master::createSharedMemory(int &shm_fd, const char *name, int size)
+void EthercatMaster::createSharedMemory(int &shm_fd, const char *name, int size)
 {
     shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
     if (shm_fd == -1)
@@ -414,7 +404,7 @@ void Master::createSharedMemory(int &shm_fd, const char *name, int size)
     ftruncate(shm_fd, size);
 }
 
-void Master::mapSharedMemory(void *&ptr, int shm_fd, int size)
+void EthercatMaster::mapSharedMemory(void *&ptr, int shm_fd, int size)
 {
     ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     if (ptr == MAP_FAILED)
@@ -423,7 +413,7 @@ void Master::mapSharedMemory(void *&ptr, int shm_fd, int size)
     }
 }
 
-void Master::initializeSharedData()
+void EthercatMaster::initializeSharedData()
 {
     jointDataPtr->setZero();
     systemStateDataPtr->setZero();
@@ -436,92 +426,4 @@ void Master::initializeSharedData()
     printf("Safety Controller Started \n");
 }
 
-void Master::setRealtimePriority()
-{
-    struct sched_param param = {};
-    param.sched_priority = sched_get_priority_max(SCHED_FIFO);
 
-    std::cout << "Using priority " << param.sched_priority << "." << std::endl;
-
-    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1)
-    {
-        perror("sched_setscheduler failed");
-    }
-}
-
-void Master::transitionToState(ControlWordValues value, int jnt_ctr){
-        EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].controlword, value);
-}
-
-uint16_t Master::transitionToSwitchedOn(uint16_t status, uint16_t command, int joint_num)
-{
-    // cout << "update_state" << endl;
-    if (((status | 65456) ^ 65456) == 0)
-    {
-        // std::cout<<"Not ready to switch on, joint num : "<<joint_num<<std::endl;
-    }
-    else if (((status | 65456) ^ 65520) == 0)
-    {
-        // std::cout<<"Switch on Disabled, joint num : "<<joint_num<<std::endl;
-        command = 6;
-    }
-    else if (((status | 65424) ^ 65457) == 0)
-    {
-        // std::cout<<"Ready to Switch on, joint num : "<<joint_num<<std::endl;
-        command = 7;
-    }
-    else if (((status | 65424) ^ 65459) == 0)
-    {
-        // std::cout<<"Switched On, joint num : "<<joint_num<<std::endl;
-        // command = 15;
-        driveSwitchedOn[joint_num] = true;
-    }
-    else
-    {
-        // printf("Line 430 status: %d, command : %d\n", status, command);
-    }
-
-    return command;
-}
-
-uint16_t Master::transitionToOperationEnabled(uint16_t status, uint16_t command, int joint_num)
-{
-    if (((status | 65424) ^ 65459) == 0)
-    {
-        std::cout << "Switched On, joint num : " << joint_num << std::endl;
-        command = 15;
-    }
-    else if (((status | 65424) ^ 65463) == 0)
-    {
-        // printf(" Operation Enabled \n");
-        // Operation Enabled
-    }
-    else
-    {
-        // printf("Line 430 status: %d, command : %d\n", status, command);
-    }
-
-    return command;
-}
-
-uint16_t Master::transitionToFaultState(uint16_t status, uint16_t command, int joint_num)
-{
-    // cout << "update_state" << endl;
-    if (((status | 65456) ^ 65471) == 0)
-    {
-        // Fault Reaction Active
-        std::cout << "Fault reaction active" << std::endl;
-    }
-    else if (((status | 65456) ^ 65464) == 0)
-    {
-        // Fault
-        std::cout << "Fault" << std::endl;
-        command = 15;
-    }
-    else
-    {
-        // printf("Line 430 status: %d, command : %d\n", status, command);
-    }
-
-    return command;
-}

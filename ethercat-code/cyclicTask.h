@@ -1,9 +1,11 @@
 #pragma once
 
-#include <master.h>
+#include "master.h"
 using namespace std;
 
-void Master::cyclicTask()
+uint8_t* EthercatMaster::domainPd = NULL;
+
+void EthercatMaster::cyclicTask()
 {
     struct timespec wakeupTime;
     clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
@@ -13,7 +15,10 @@ void Master::cyclicTask()
         wakeupTime = timespecAdd(wakeupTime, cycleTime);
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeupTime, NULL);
 
-        performCyclicTasks();
+        ecrt_master_application_time(master, TIMESPEC2NS(wakeupTime));
+        ecrt_master_receive(master);
+        ecrt_domain_process(domain);
+        checkDomainState();
 
         if (counter)
         {
@@ -27,24 +32,15 @@ void Master::cyclicTask()
 
         handleDriveStates();
 
-        synchronizeClocks();
     }
 }
 
-void Master::performCyclicTasks()
-{
-    ecrt_master_application_time(master, TIMESPEC2NS(wakeupTime));
-    ecrt_master_receive(master);
-    ecrt_domain_process(domain);
-    checkDomainState();
-}
-
-void Master::performPeriodicTasks()
+void EthercatMaster::performPeriodicTasks()
 {
     checkMasterState();
 }
 
-void Master::handleDriveStates()
+void EthercatMaster::handleDriveStates()
 {
     switch (system_state_data_ptr->current_state)
     {
@@ -71,12 +67,12 @@ void Master::handleDriveStates()
     }
 }
 
-void Master::initializeDrives()
+void EthercatMaster::initializeDrives()
 {
     system_state_data_ptr->current_state = DriveState::NOT_READY_TO_SWITCH_ON;
 }
 
-void Master::enableDrivesIfInitialized()
+void EthercatMaster::enableDrivesIfInitialized()
 {
     if (system_state_data_ptr->initialize_drives)
     {
@@ -84,7 +80,7 @@ void Master::enableDrivesIfInitialized()
     }
 }
 
-void Master::handleSwitchedOnState()
+void EthercatMaster::handleSwitchedOnState()
 {
     for (size_t jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
     {
@@ -103,7 +99,7 @@ void Master::handleSwitchedOnState()
             std::cout << "Drive inside error break didn't work \n";
         }
 
-        uint16_t &domain_command = transitionToSwitchedOn(drive_status, jnt_ctr);
+        uint16_t domain_command = transitionToSwitchedOn(drive_status, jnt_ctr);
         EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].controlword, domain_command);
         // transitionToState(CW_SWITCH_ON, jnt_ctr);
     }
@@ -132,7 +128,7 @@ void Master::handleSwitchedOnState()
     }
 }
 
-void Master::updateJointDataInSwitchedOnState()
+void EthercatMaster::updateJointDataInSwitchedOnState()
 {
     for (int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
@@ -142,7 +138,7 @@ void Master::updateJointDataInSwitchedOnState()
     }
 }
 
-void Master::handleSafetyCheckDone()
+void EthercatMaster::handleSafetyCheckDone()
 {
     if (system_state_data_ptr->trigger_error_mode)
     {
@@ -157,7 +153,7 @@ void Master::handleSafetyCheckDone()
     }
 }
 
-void Master::handleSwitchToOperationState()
+void EthercatMaster::handleSwitchToOperationState()
 {
     if (system_state_data_ptr->trigger_error_mode)
     {
@@ -205,7 +201,7 @@ void Master::handleSwitchToOperationState()
     }
 }
 
-void Master::updateSwitchToOperationState()
+void EthercatMaster::updateSwitchToOperationState()
 {
     system_state_data_ptr->current_state = system_state_data_ptr->drive_enable_for_operation[0] &&
                                            system_state_data_ptr->drive_enable_for_operation[1] &&
@@ -214,7 +210,7 @@ void Master::updateSwitchToOperationState()
                                        : DriveState::SWITCH_TO_OPERATION;
 }
 
-void Master::handleOperationEnabledState()
+void EthercatMaster::handleOperationEnabledState()
 {
     system_state_data_ptr->status_operation_enabled = true;
 
@@ -242,7 +238,7 @@ void Master::handleOperationEnabledState()
     }
 }
 
-void Master::handlePositionMode()
+void EthercatMaster::handlePositionMode()
 {
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
@@ -258,7 +254,7 @@ void Master::handlePositionMode()
     }
 }
 
-void Master::handleVelocityMode()
+void EthercatMaster::handleVelocityMode()
 {
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
@@ -267,7 +263,7 @@ void Master::handleVelocityMode()
     }
 }
 
-void Master::handleTorqueMode()
+void EthercatMaster::handleTorqueMode()
 {
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
@@ -276,7 +272,7 @@ void Master::handleTorqueMode()
     }
 }
 
-void Master::handleErrorState()
+void EthercatMaster::handleErrorState()
 {
     DriveState localState = DriveState::SWITCHED_ON;
     system_state_data_ptr->state = SafetyStates::ERROR;
@@ -294,4 +290,101 @@ void Master::handleErrorState()
     }
 
     system_state_data_ptr->current_state = localState;
+}
+
+void EthercatMaster::transitionToState(ControlWordValues value, int jnt_ctr){
+        EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].controlword, value);
+}
+
+uint16_t EthercatMaster::transitionToSwitchedOn(uint16_t status, int joint_num)
+{
+    // cout << "update_state" << endl;
+    uint16_t command = 6;
+    if (((status | 65456) ^ 65456) == 0)
+    {
+        // std::cout<<"Not ready to switch on, joint num : "<<joint_num<<std::endl;
+    }
+    else if (((status | 65456) ^ 65520) == 0)
+    {
+        // std::cout<<"Switch on Disabled, joint num : "<<joint_num<<std::endl;
+        command = 6;
+    }
+    else if (((status | 65424) ^ 65457) == 0)
+    {
+        // std::cout<<"Ready to Switch on, joint num : "<<joint_num<<std::endl;
+        command = 7;
+    }
+    else if (((status | 65424) ^ 65459) == 0)
+    {
+        // std::cout<<"Switched On, joint num : "<<joint_num<<std::endl;
+        // command = 15;
+        driveSwitchedOn[joint_num] = true;
+    }
+    else
+    {
+        // printf("Line 430 status: %d, command : %d\n", status, command);
+    }
+
+    return command;
+}
+
+uint16_t EthercatMaster::transitionToOperationEnabled(uint16_t status, int joint_num)
+{
+    uint16_t command = 6;
+    if (((status | 65424) ^ 65459) == 0)
+    {
+        std::cout << "Switched On, joint num : " << joint_num << std::endl;
+        command = 15;
+    }
+    else if (((status | 65424) ^ 65463) == 0)
+    {
+        // printf(" Operation Enabled \n");
+        // Operation Enabled
+    }
+    else
+    {
+        // printf("Line 430 status: %d, command : %d\n", status, command);
+    }
+
+    return command;
+}
+
+uint16_t EthercatMaster::transitionToFaultState(uint16_t status, int joint_num)
+{
+    // cout << "update_state" << endl;
+    uint16_t command = 6;
+    if (((status | 65456) ^ 65471) == 0)
+    {
+        // Fault Reaction Active
+        std::cout << "Fault reaction active" << std::endl;
+    }
+    else if (((status | 65456) ^ 65464) == 0)
+    {
+        // Fault
+        std::cout << "Fault" << std::endl;
+        command = 15;
+    }
+    else
+    {
+        // printf("Line 430 status: %d, command : %d\n", status, command);
+    }
+
+    return command;
+}
+
+struct timespec EthercatMaster::timespecAdd(struct timespec time1, struct timespec time2){
+    struct timespec result;
+
+    if ((time1.tv_nsec + time2.tv_nsec) >= NSEC_PER_SEC)
+    {
+        result.tv_sec = time1.tv_sec + time2.tv_sec + 1;
+        result.tv_nsec = time1.tv_nsec + time2.tv_nsec - NSEC_PER_SEC;
+    }
+    else
+    {
+        result.tv_sec = time1.tv_sec + time2.tv_sec;
+        result.tv_nsec = time1.tv_nsec + time2.tv_nsec;
+    }
+
+    return result;
 }

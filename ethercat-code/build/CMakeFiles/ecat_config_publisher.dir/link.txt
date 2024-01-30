@@ -1,1 +1,1 @@
-/usr/bin/c++  -pthread -rdynamic CMakeFiles/ecat_config_publisher.dir/master.cpp.o -o ecat_config_publisher  -Wl,-rpath,/usr/local/lib /usr/local/lib/libiceoryx_posh.a /usr/local/lib/libethercat.so /usr/local/lib/libiceoryx_dust.a /usr/local/lib/libiceoryx_hoofs.a /usr/local/lib/libiceoryx_platform.a -lpthread -lacl -latomic -lrt 
+/usr/bin/c++  -pthread -rdynamic CMakeFiles/ecat_config_publisher.dir/master.cpp.o -o ecat_config_publisher  -Wl,-rpath,/usr/local/lib /usr/local/lib/libethercat.so 

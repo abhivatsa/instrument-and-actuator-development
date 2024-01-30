@@ -14,7 +14,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <cstdint>
-#include "ecrt.h"
+#include <ecrt.h>
 #include "SharedObject.h"
 
 // Define your EtherCAT constants here
@@ -77,13 +77,15 @@ enum class StatusWordValues : uint16_t {
     // Add more status word values as needed
 };
 
-class Master {
+class EthercatMaster {
 public:
-    Master();
-    ~Master();
-
+    
+    EthercatMaster();
+    ~EthercatMaster();
     void run();
+
 private:
+    
     ec_master_t *master;
     ec_master_state_t masterState;
     ec_domain_t *domain;
@@ -99,12 +101,11 @@ private:
     JointData *jointDataPtr;
     SystemStateData *systemStateDataPtr;
 
-    void updateState();
     void readDriveState(uint16_t statusword, int joint_num);
 
-    uint16_t transitionToSwitchedOn(uint16_t status, uint16_t command, int joint_num);
-    uint16_t transitionToOperationEnabled(uint16_t status, uint16_t command, int joint_num);
-    uint16_t transitionToFaultState(uint16_t status, uint16_t command, int joint_num);
+    uint16_t transitionToSwitchedOn(uint16_t status, int joint_num);
+    uint16_t transitionToOperationEnabled(uint16_t status, int joint_num);
+    uint16_t transitionToFaultState(uint16_t status, int joint_num);
 
     void transitionToState(ControlWordValues value, int jnt_ctr); 
 
@@ -113,24 +114,19 @@ private:
     void checkDomainState();
     void checkMasterState();
     
-    
-    void sdoMapping(ec_slave_config_t *sc, int jnt_ctr);
     void pdoMapping(ec_slave_config_t *sc);
 
-    
     void configureSharedMemory();
     void createSharedMemory(int& shm_fd, const char* name, int size);
     void mapSharedMemory(void*& ptr, int shm_fd, int size);
     void initializeSharedData();
 
     void stackPrefault();
-    void setRealtimePriority();
 
     static void signalHandler(int signum);
     
     // Organized Cyclic Task Structure
     void cyclicTask();
-    void performCyclicTasks();
     void performPeriodicTasks();
     void handleDriveStates();
     void initializeDrives();
