@@ -1,3 +1,0 @@
-/home/abhishek/Documents/instrument-devel-app/ethercat-code/build/CMakeFiles/ecat_master.dir
-/home/abhishek/Documents/instrument-devel-app/ethercat-code/build/CMakeFiles/edit_cache.dir
-/home/abhishek/Documents/instrument-devel-app/ethercat-code/build/CMakeFiles/rebuild_cache.dir
