@@ -150,7 +150,7 @@ void EthercatMaster::run()
     // Set CPU affinity for real-time thread
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(0, &cpuset); // Set to the desired CPU core
+    CPU_SET(3, &cpuset); // Set to the desired CPU core
 
     if (sched_setaffinity(0, sizeof(cpuset), &cpuset) == -1)
     {
