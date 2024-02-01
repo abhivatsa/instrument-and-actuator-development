@@ -1,21 +1,50 @@
 #pragma once
 
-#include "master.h"
+#include "transistionState.h"
+
 using namespace std;
 
 uint8_t* EthercatMaster::domainPd = NULL;
 
+void EthercatMaster::inc_period(struct period_info *pinfo)
+{
+
+    pinfo->next_period.tv_nsec += pinfo->period_ns;
+
+    while (pinfo->next_period.tv_nsec >= 1000000000)
+    {
+        /* timespec nsec overflow */
+        pinfo->next_period.tv_sec++;
+        pinfo->next_period.tv_nsec -= 1000000000;
+    }
+}
+
+void EthercatMaster::periodic_task_init(struct period_info *pinfo)
+{
+    /* for simplicity, hardcoding a 1ms period */
+    pinfo->period_ns = 1000000;
+
+    clock_gettime(CLOCK_MONOTONIC, &(pinfo->next_period));
+}
+
+void EthercatMaster::wait_rest_of_period(struct period_info *pinfo)
+{
+    inc_period(pinfo);
+
+    /* for simplicity, ignoring possibilities of signal wakes */
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &pinfo->next_period, NULL);
+}
+
 void EthercatMaster::cyclicTask()
 {
-    struct timespec wakeupTime;
-    clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
+    struct period_info pinfo;
+
+    periodic_task_init(&pinfo);
 
     while (!exitFlag)
     {
-        wakeupTime = timespecAdd(wakeupTime, cycleTime);
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeupTime, NULL);
-
-        ecrt_master_application_time(master, TIMESPEC2NS(wakeupTime));
+        
+        ecrt_master_application_time(master, ((uint64_t) pinfo.next_period.tv_sec*1000000000 + pinfo.next_period.tv_nsec));
         ecrt_master_receive(master);
         ecrt_domain_process(domain);
         checkDomainState();
@@ -27,17 +56,22 @@ void EthercatMaster::cyclicTask()
         else
         {
             counter = FREQUENCY;
-            performPeriodicTasks();
+            do_rt_task();
         }
 
         handleDriveStates();
-
+        wait_rest_of_period(&pinfo);
     }
+
+    struct timespec wakeupTime;
+    clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
+
 }
 
-void EthercatMaster::performPeriodicTasks()
+void EthercatMaster::do_rt_task()
 {
     checkMasterState();
+    handleDriveStates();
 }
 
 void EthercatMaster::handleDriveStates()
@@ -182,10 +216,7 @@ void EthercatMaster::handleSwitchToOperationState()
             EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].modes_of_operation, OperationModeState::POSITION_MODE);
             EC_WRITE_S32(domainPd + driveOffset[jnt_ctr].target_position, joint_data_ptr->joint_position[jnt_ctr]);
 
-            // if (((drive_status | 65424) ^ 65463) == 0)
-            // {
-            //     system_state_data_ptr->drive_enable_for_operation[jnt_ctr] = true;
-            // }
+
 
             if (driveStatus == StatusWordValues::SW_OPERATION_ENABLED)
             {
@@ -290,101 +321,4 @@ void EthercatMaster::handleErrorState()
     }
 
     system_state_data_ptr->current_state = localState;
-}
-
-void EthercatMaster::transitionToState(ControlWordValues value, int jnt_ctr){
-        EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].controlword, value);
-}
-
-uint16_t EthercatMaster::transitionToSwitchedOn(uint16_t status, int joint_num)
-{
-    // cout << "update_state" << endl;
-    uint16_t command = 6;
-    if (((status | 65456) ^ 65456) == 0)
-    {
-        // std::cout<<"Not ready to switch on, joint num : "<<joint_num<<std::endl;
-    }
-    else if (((status | 65456) ^ 65520) == 0)
-    {
-        // std::cout<<"Switch on Disabled, joint num : "<<joint_num<<std::endl;
-        command = 6;
-    }
-    else if (((status | 65424) ^ 65457) == 0)
-    {
-        // std::cout<<"Ready to Switch on, joint num : "<<joint_num<<std::endl;
-        command = 7;
-    }
-    else if (((status | 65424) ^ 65459) == 0)
-    {
-        // std::cout<<"Switched On, joint num : "<<joint_num<<std::endl;
-        // command = 15;
-        driveSwitchedOn[joint_num] = true;
-    }
-    else
-    {
-        // printf("Line 430 status: %d, command : %d\n", status, command);
-    }
-
-    return command;
-}
-
-uint16_t EthercatMaster::transitionToOperationEnabled(uint16_t status, int joint_num)
-{
-    uint16_t command = 6;
-    if (((status | 65424) ^ 65459) == 0)
-    {
-        std::cout << "Switched On, joint num : " << joint_num << std::endl;
-        command = 15;
-    }
-    else if (((status | 65424) ^ 65463) == 0)
-    {
-        // printf(" Operation Enabled \n");
-        // Operation Enabled
-    }
-    else
-    {
-        // printf("Line 430 status: %d, command : %d\n", status, command);
-    }
-
-    return command;
-}
-
-uint16_t EthercatMaster::transitionToFaultState(uint16_t status, int joint_num)
-{
-    // cout << "update_state" << endl;
-    uint16_t command = 6;
-    if (((status | 65456) ^ 65471) == 0)
-    {
-        // Fault Reaction Active
-        std::cout << "Fault reaction active" << std::endl;
-    }
-    else if (((status | 65456) ^ 65464) == 0)
-    {
-        // Fault
-        std::cout << "Fault" << std::endl;
-        command = 15;
-    }
-    else
-    {
-        // printf("Line 430 status: %d, command : %d\n", status, command);
-    }
-
-    return command;
-}
-
-struct timespec EthercatMaster::timespecAdd(struct timespec time1, struct timespec time2){
-    struct timespec result;
-
-    if ((time1.tv_nsec + time2.tv_nsec) >= NSEC_PER_SEC)
-    {
-        result.tv_sec = time1.tv_sec + time2.tv_sec + 1;
-        result.tv_nsec = time1.tv_nsec + time2.tv_nsec - NSEC_PER_SEC;
-    }
-    else
-    {
-        result.tv_sec = time1.tv_sec + time2.tv_sec;
-        result.tv_nsec = time1.tv_nsec + time2.tv_nsec;
-    }
-
-    return result;
 }

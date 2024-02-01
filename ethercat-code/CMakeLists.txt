@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ecat_master)
+project(ecat_master_project)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 

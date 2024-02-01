@@ -149,5 +149,4 @@ struct AppData
 
 JointData *joint_data_ptr;
 SystemStateData *system_state_data_ptr;
-
 AppData *app_data_ptr;

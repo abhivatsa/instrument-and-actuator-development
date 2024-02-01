@@ -89,6 +89,7 @@
         "strstream": "cpp",
         "hash_map": "cpp",
         "alignedvector3": "cpp",
-        "openglsupport": "cpp"
+        "openglsupport": "cpp",
+        "tensor": "cpp"
     }
 }

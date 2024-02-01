@@ -183,33 +183,7 @@ void EthercatMaster::run()
 
     printf("Starting RT task with dt=%u ns.\n", PERIOD_NS);
 
-    struct timespec wakeupTime;
-    clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
-    wakeupTime.tv_sec += 1; // Start in the future
-    wakeupTime.tv_nsec = 0;
-
-    int ret;
-
-    // Real-time loop
-    while (1)
-    {
-        ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeupTime, NULL);
-        if (ret)
-        {
-            fprintf(stderr, "clock_nanosleep(): %s\n", strerror(ret));
-            // Handle the error appropriately based on your application's requirements
-            break;
-        }
-
-        cyclicTask();
-
-        wakeupTime.tv_nsec += PERIOD_NS;
-        while (wakeupTime.tv_nsec >= NSEC_PER_SEC)
-        {
-            wakeupTime.tv_nsec -= NSEC_PER_SEC;
-            wakeupTime.tv_sec++;
-        }
-    }
+    cyclicTask();
 }
 
 

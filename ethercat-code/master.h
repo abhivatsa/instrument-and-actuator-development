@@ -127,7 +127,7 @@ private:
     
     // Organized Cyclic Task Structure
     void cyclicTask();
-    void performPeriodicTasks();
+    void do_rt_task();
     void handleDriveStates();
     void initializeDrives();
     void enableDrivesIfInitialized();
@@ -141,5 +141,15 @@ private:
     void handleVelocityMode();
     void handleTorqueMode();
     void handleErrorState();
+
+    struct period_info
+    {
+        struct timespec next_period;
+        long period_ns;
+    };
+
+    static void inc_period(struct period_info *pinfo);
+    static void periodic_task_init(struct period_info *pinfo);
+    static void wait_rest_of_period(struct period_info *pinfo);
 
 };
