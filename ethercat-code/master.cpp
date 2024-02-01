@@ -12,8 +12,8 @@ int main(int argc, char **argv)
     return 0; // Indicate successful program execution
 }
 
-EthercatMaster::EthercatMaster() : counter(0), syncRefCounter(0), cycleTime({0, PERIOD_NS}), allDriveEnabled(false)
-{    
+EthercatMaster::EthercatMaster()
+{
     master = ecrt_request_master(0);
     if (!master)
     {
@@ -67,10 +67,9 @@ EthercatMaster::EthercatMaster() : counter(0), syncRefCounter(0), cycleTime({0, 
             {0, jnt_ctr, ingeniaDenalliXcr, 0x60FF, 0, &driveOffset[jnt_ctr].target_velocity},           // 60FF 0 target velocity
             {0, jnt_ctr, ingeniaDenalliXcr, 0x60B2, 0, &driveOffset[jnt_ctr].torque_offset},
             {0, jnt_ctr, ingeniaDenalliXcr, 0x60B1, 0, &driveOffset[jnt_ctr].velocity_offset}, // 60B2 0 torque offset
-            {}
-        };
+            {}};
 
-        ecrt_slave_config_dc(sc, 0x0300, PERIOD_NS, 0, 0, 0);
+        ecrt_slave_config_dc(sc, 0x0300, 1000000, 0, 0, 0);
 
         /** Registers a bunch of PDO entries for a domain.
          *
@@ -181,114 +180,7 @@ void EthercatMaster::run()
     // Set real-time interval for the master
     ecrt_master_set_send_interval(master, 1000);
 
-    printf("Starting RT task with dt=%u ns.\n", PERIOD_NS);
-
     cyclicTask();
-}
-
-
-void EthercatMaster::readDriveState(uint16_t statusword, int joint_num)
-{
-
-    // Check if the drive is in the Operation Enable state
-    if (statusword & 0x1000)
-    {
-        std::cout << "Drive " << joint_num << " is in Operation Enabled state." << std::endl;
-
-        // Check if the drive is in the Quick Stop state
-        if (statusword & 0x0800)
-        {
-            std::cout << "Drive " << joint_num << " is in Quick Stop state." << std::endl;
-        }
-
-        // Check if the drive is in the Warning state
-        if (statusword & 0x0400)
-        {
-            std::cout << "Drive " << joint_num << " is in Warning state." << std::endl;
-        }
-    }
-
-    // Check if the drive is in the Fault state
-    else if (statusword & 0x0400)
-    {
-        std::cout << "Drive " << joint_num << " is in Fault state." << std::endl;
-
-        // Check if the Fault is Acknowledged
-        if (statusword & 0x0200)
-        {
-            std::cout << "Fault is Acknowledged." << std::endl;
-        }
-    }
-
-    // Check if the drive is in the Switched On state
-    else if (statusword & 0x0010)
-    {
-        std::cout << "Drive " << joint_num << " is in Switched On state." << std::endl;
-
-        // Check if the drive is in the Ready to Switch On state
-        if (statusword & 0x0020)
-        {
-            std::cout << "Drive " << joint_num << " is in Ready to Switch On state." << std::endl;
-        }
-    }
-
-    // Check if the drive is in the Not Ready to Switch On state
-    else if (statusword & 0x0008)
-    {
-        std::cout << "Drive " << joint_num << " is in Not Ready to Switch On state." << std::endl;
-    }
-
-    // Check if the drive is in the Switch On Disabled state
-    else if (statusword & 0x0007)
-    {
-        std::cout << "Drive " << joint_num << " is in Switch On Disabled state." << std::endl;
-    }
-
-    // Additional checks can be added based on specific application requirements
-
-    // Note: This is a general interpretation and may need to be adjusted based on the drive's documentation.
-}
-
-void EthercatMaster::checkDomainState()
-{
-    // cout << "check_domain_state" << endl;
-    ec_domain_state_t ds;
-
-    ecrt_domain_state(domain, &ds); // to do - do for all domains
-
-    if (ds.working_counter != domainState.working_counter)
-    {
-        // printf("Domain1: WC %u.\n", ds.working_counter);
-    }
-    if (ds.wc_state != domainState.wc_state)
-    {
-        // printf("Domain1: State %u.\n", ds.wc_state);
-    }
-
-    domainState = ds;
-}
-
-void EthercatMaster::checkMasterState()
-{
-    // cout << "check_master_state" << endl;
-    ec_master_state_t ms;
-
-    ecrt_master_state(master, &ms);
-
-    if (ms.slaves_responding != masterState.slaves_responding)
-    {
-        printf("%u slave(s).\n", ms.slaves_responding);
-    }
-    if (ms.al_states != masterState.al_states)
-    {
-        printf("AL states: 0x%02X.\n", ms.al_states);
-    }
-    if (ms.link_up != masterState.link_up)
-    {
-        printf("Link is %s.\n", ms.link_up ? "up" : "down");
-    }
-
-    masterState = ms;
 }
 
 void EthercatMaster::stackPrefault()
@@ -400,4 +292,44 @@ void EthercatMaster::initializeSharedData()
     printf("Safety Controller Started \n");
 }
 
+void EthercatMaster::checkDomainState()
+{
+    // cout << "check_domain_state" << endl;
+    ec_domain_state_t ds;
 
+    ecrt_domain_state(domain, &ds); // to do - do for all domains
+
+    if (ds.working_counter != domainState.working_counter)
+    {
+        // printf("Domain1: WC %u.\n", ds.working_counter);
+    }
+    if (ds.wc_state != domainState.wc_state)
+    {
+        // printf("Domain1: State %u.\n", ds.wc_state);
+    }
+
+    domainState = ds;
+}
+
+void EthercatMaster::checkMasterState()
+{
+    // cout << "check_master_state" << endl;
+    ec_master_state_t ms;
+
+    ecrt_master_state(master, &ms);
+
+    if (ms.slaves_responding != masterState.slaves_responding)
+    {
+        printf("%u slave(s).\n", ms.slaves_responding);
+    }
+    if (ms.al_states != masterState.al_states)
+    {
+        printf("AL states: 0x%02X.\n", ms.al_states);
+    }
+    if (ms.link_up != masterState.link_up)
+    {
+        printf("Link is %s.\n", ms.link_up ? "up" : "down");
+    }
+
+    masterState = ms;
+}

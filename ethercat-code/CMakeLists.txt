@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 project(ecat_master_project)
 
+set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fstack-usage")
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Map,stack_usage.map")
 
 find_package(EtherCAT REQUIRED)
 

@@ -40,7 +40,6 @@ enum class DriveState
     INITIALIZE,
     NOT_READY_TO_SWITCH_ON,
     SWITCHED_ON,
-    SWITCH_TO_OPERATION,
     OPERATION_ENABLED,
     ERROR,
 };
@@ -66,7 +65,7 @@ struct SystemStateData
 {
     void setZero()
     {
-        current_state = DriveState::INITIALIZE;
+        current_state = DriveState::ERROR;
         drive_operation_mode = OperationModeState::POSITION_MODE;
         state = SafetyStates::INITIALIZE;
         initialize_drives = false;
