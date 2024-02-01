@@ -117,7 +117,6 @@ private:
 };
 
 uint8_t *EthercatMaster::domainPd = NULL;
-uint16_t domain_command[NUM_JOINTS] = {0};
 
 // Define your EtherCAT constants here
 #define DOMAIN1_START 1

@@ -4,7 +4,6 @@
 
 void SafetyController::cyclicTask()
 {
-
     struct period_info pinfo;
 
     periodic_task_init(&pinfo);
@@ -42,9 +41,24 @@ void SafetyController::do_rt_task()
     switch (system_state_data_ptr->state)
     {
     case SafetyStates::INITIALIZE:
+        break;
+    case SafetyStates::INITIALIZE_DRIVES:
+        break;
+    case SafetyStates::SAFETY_CHECK:
+        break;
+    case SafetyStates::READY_FOR_OPERATION:
+        break;
+    case SafetyStates::OPERATION:
+        break;
+    case SafetyStates::ERROR:
+        break;
+    }
+    switch (system_state_data_ptr->state)
+    {
+    case SafetyStates::INITIALIZE:
     { /* code */
-        system_state_data_ptr->safety_controller_enabled = true;
-        if (system_state_data_ptr->current_state == DriveState::NOT_READY_TO_SWITCH_ON)
+        
+        if (system_state_data_ptr->current_state == DriveState::INITIALIZE)
         {
             // send signal to motion planner
             if (app_data_ptr->initialize_system) // motion planner initialized?
@@ -52,7 +66,17 @@ void SafetyController::do_rt_task()
                 app_data_ptr->safety_process_status = true;
                 if (app_data_ptr->initialize_drives) // initialize drive? from  motion planner
                 {
-                    system_state_data_ptr->state = SafetyStates::INITIALIZE_DRIVES;
+                    // system_state_data_ptr->state = SafetyStates::INITIALIZE_DRIVES;
+                    if (system_state_data_ptr->current_state == DriveState::SWITCHED_ON)
+                    {
+                        app_data_ptr->trigger_error = false;
+                        app_data_ptr->drive_initialized = true;
+                        if (system_state_data_ptr->start_safety_check)
+                        {
+                            system_state_data_ptr->state = SafetyStates::SAFETY_CHECK;
+                        }
+                    }
+
                 }
             }
         }

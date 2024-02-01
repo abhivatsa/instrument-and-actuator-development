@@ -1,9 +1,15 @@
 #include "cyclicTask.h"
 
+int main()
+{
+    SafetyController safety_ctrl;
+    safety_ctrl.run();
+    return 0;
+}
+
+
 SafetyController::SafetyController(){
-
     configureSharedMemory();
-
 }
 
 SafetyController::~SafetyController(){
@@ -43,7 +49,7 @@ void SafetyController::run(){
         perror("sched_setscheduler failed");
     }
 
-    printf("Starting RT task with dt=%u ns.\n", PERIOD_NS);
+    system_state_data_ptr->safety_controller_enabled = true;
 
     cyclicTask();
 
@@ -57,7 +63,6 @@ void SafetyController::stackPrefault()
 
 void SafetyController::signalHandler(int signum)
 {
-
     if (signum == SIGINT)
     {
         std::cout << "Signal received: " << signum << std::endl;
@@ -107,29 +112,13 @@ void SafetyController::initializeSharedData()
     jointDataPtr->setZero();
     systemStateDataPtr->setZero();
     app_data_ptr->setZero();
-
-    printf("Waiting for Safety Controller to get Started ...\n");
-    while (!systemStateDataPtr->safety_controller_enabled)
-    {
-    }
-
-    printf("Safety Controller Started \n");
 }
 
-int main()
-{
-    SafetyController safety_ctrl;
-
-    safety_ctrl.run();
-
-    return 0;
-
-}
 
 void SafetyController::read_data()
 {
 
-    for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+    for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
         app_data_ptr->actual_position[jnt_ctr] = joint_data_ptr->joint_position[jnt_ctr];
         app_data_ptr->actual_velocity[jnt_ctr] = joint_data_ptr->joint_velocity[jnt_ctr];
@@ -145,7 +134,7 @@ void SafetyController::write_data()
 
     if (!system_state_data_ptr->trigger_error_mode && system_state_data_ptr->status_operation_enabled)
     {
-        for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+        for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
             joint_data_ptr->target_position[jnt_ctr] = app_data_ptr->target_position[jnt_ctr];
             joint_data_ptr->target_velocity[jnt_ctr] = app_data_ptr->target_velocity[jnt_ctr];
