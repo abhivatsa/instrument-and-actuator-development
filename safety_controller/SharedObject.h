@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <cmath>
 
-constexpr int NUM_JOINTS = 3; // Change this to the desired number of joints
+constexpr int NUM_JOINTS = 4; // Change this to the desired number of joints
 
 enum class DriveState
 {
@@ -31,6 +31,7 @@ enum class SafetyStates
     READY_FOR_OPERATION,
     OPERATION,
     ERROR,
+    RECOVERY,
 };
 
 struct JointData
@@ -57,14 +58,13 @@ struct JointData
     bool instrument_detection_status;
 };
 
-
 struct SystemStateData
 {
     void setZero()
     {
-        current_state = DriveState::ERROR;
+        drive_state = DriveState::ERROR;
         drive_operation_mode = OperationModeState::POSITION_MODE;
-        state = SafetyStates::INITIALIZE;
+        safety_state = SafetyStates::INITIALIZE;
         initialize_drives = false;
         switch_to_operation = false;
 
@@ -78,9 +78,9 @@ struct SystemStateData
         std::fill_n(drive_enable_for_operation, NUM_JOINTS, false);
     }
 
-    DriveState current_state;
+    DriveState drive_state;
     OperationModeState drive_operation_mode;
-    SafetyStates state;
+    SafetyStates safety_state;
     bool status_switched_on;
     bool status_operation_enabled;
     bool safety_controller_enabled;
@@ -96,6 +96,7 @@ struct AppData
 {
     void setZero()
     {
+        // Initialize boolean flags
         switch_to_operation = false;
         initialize_drives = false;
         initialize_system = false;
@@ -106,30 +107,30 @@ struct AppData
         reset_error = false;
         operation_enable_status = false;
 
-        for (int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
-        {
-            actual_position[jnt_ctr] = 0;
-            actual_velocity[jnt_ctr] = 0;
-            actual_torque[jnt_ctr] = 0;
-            cart_pos[3] = 0;
-            target_position[jnt_ctr] = 0;
-            target_velocity[jnt_ctr] = 0;
-            target_torque[jnt_ctr] = 0;
-            drive_operation_mode = OperationModeState::POSITION_MODE;
-            switched_on = false;
-            sterile_detection = false;
-            instrument_detection = false;
-            simulation_mode = false;
-        }
+        // Use std::fill_n for array initialization
+        std::fill_n(actual_position, NUM_JOINTS, 0.0);
+        std::fill_n(actual_velocity, NUM_JOINTS, 0.0);
+        std::fill_n(actual_torque, NUM_JOINTS, 0.0);
+        std::fill_n(cart_pos, NUM_JOINTS, 0.0);
+        std::fill_n(target_position, NUM_JOINTS, 0.0);
+        std::fill_n(target_velocity, NUM_JOINTS, 0.0);
+        std::fill_n(target_torque, NUM_JOINTS, 0.0);
+
+        // Initialize other members
+        drive_operation_mode = OperationModeState::POSITION_MODE;
+        switched_on = false;
+        sterile_detection = false;
+        instrument_detection = false;
+        simulation_mode = false;
     }
 
-    double actual_position[3];
-    double actual_velocity[3];
-    double actual_torque[3];
-    double cart_pos[3];
-    double target_position[3];
-    double target_velocity[3];
-    double target_torque[3];
+    double actual_position[NUM_JOINTS];
+    double actual_velocity[NUM_JOINTS];
+    double actual_torque[NUM_JOINTS];
+    double cart_pos[NUM_JOINTS];
+    double target_position[NUM_JOINTS];
+    double target_velocity[NUM_JOINTS];
+    double target_torque[NUM_JOINTS];
     OperationModeState drive_operation_mode;
     bool switched_on;
     bool sterile_detection;

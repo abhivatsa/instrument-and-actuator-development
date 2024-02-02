@@ -57,7 +57,7 @@ void EthercatMaster::cyclicTask()
 
 void EthercatMaster::do_rt_task()
 {
-    switch (system_state_data_ptr->current_state)
+    switch (system_state_data_ptr->drive_state)
     {
     case DriveState::INITIALIZE:
         initializeDrives();
@@ -84,32 +84,36 @@ void EthercatMaster::initializeDrives()
     {
         StatusWordValues drive_state = readDriveState(jnt_ctr);
 
-        if (drive_state == StatusWordValues::SW_FAULT_REACTION_ACTIVE || drive_state == StatusWordValues::SW_FAULT)
+        if (system_state_data_ptr->initialize_drives == true) // Waiting for command to initialize the Drives
         {
-            system_state_data_ptr->current_state = DriveState::ERROR;
-            std::cout << "Drive inside error \n";
-            return;
-        }
 
-        if (drive_state == StatusWordValues::SW_SWITCH_ON_DISABLED)
-        {
-            transitionToState(ControlWordValues::CW_SHUTDOWN, jnt_ctr);
-        }
+            if (drive_state == StatusWordValues::SW_FAULT_REACTION_ACTIVE || drive_state == StatusWordValues::SW_FAULT)
+            {
+                system_state_data_ptr->drive_state = DriveState::ERROR;
+                std::cout << "Drive inside error \n";
+                return;
+            }
 
-        if (drive_state == StatusWordValues::SW_READY_TO_SWITCH_ON)
-        {
-            transitionToState(ControlWordValues::CW_SWITCH_ON, jnt_ctr);
-        }
+            if (drive_state == StatusWordValues::SW_SWITCH_ON_DISABLED)
+            {
+                transitionToState(ControlWordValues::CW_SHUTDOWN, jnt_ctr);
+            }
 
-        if (drive_state == StatusWordValues::SW_SWITCHED_ON)
-        {
-            all_drives_enabled++;
+            if (drive_state == StatusWordValues::SW_READY_TO_SWITCH_ON)
+            {
+                transitionToState(ControlWordValues::CW_SWITCH_ON, jnt_ctr);
+            }
+
+            if (drive_state == StatusWordValues::SW_SWITCHED_ON)
+            {
+                all_drives_enabled++;
+            }
         }
     }
 
-    if (all_drives_enabled == NUM_JOINTS)
+    if (all_drives_enabled == NUM_JOINTS && system_state_data_ptr->initialize_drives == true)
     {
-        system_state_data_ptr->current_state = DriveState::SWITCHED_ON;
+        system_state_data_ptr->drive_state = DriveState::SWITCHED_ON;
     }
 }
 
@@ -148,13 +152,13 @@ void EthercatMaster::handleSwitchedOnState()
 
             if (all_drives_op_enable == NUM_JOINTS)
             {
-                system_state_data_ptr->current_state = DriveState::OPERATION_ENABLED;
+                system_state_data_ptr->drive_state = DriveState::OPERATION_ENABLED;
             }
         }
     }
     else
     {
-        system_state_data_ptr->current_state = DriveState::INITIALIZE;
+        system_state_data_ptr->drive_state = DriveState::INITIALIZE;
         return;
     }
 }
@@ -196,7 +200,7 @@ void EthercatMaster::handleOperationEnabledState()
     }
     else
     {
-        system_state_data_ptr->current_state = DriveState::INITIALIZE;
+        system_state_data_ptr->drive_state = DriveState::INITIALIZE;
         return;
     }
 }
@@ -253,7 +257,7 @@ void EthercatMaster::handleErrorState()
 
     if (all_drives_switched_on == NUM_JOINTS)
     {
-        system_state_data_ptr->current_state = DriveState::INITIALIZE;
+        system_state_data_ptr->drive_state = DriveState::INITIALIZE;
     }
 }
 

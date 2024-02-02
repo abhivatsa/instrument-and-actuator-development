@@ -120,9 +120,9 @@ void SafetyController::read_data()
 
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
-        app_data_ptr->actual_position[jnt_ctr] = joint_data_ptr->joint_position[jnt_ctr];
-        app_data_ptr->actual_velocity[jnt_ctr] = joint_data_ptr->joint_velocity[jnt_ctr];
-        app_data_ptr->actual_torque[jnt_ctr] = joint_data_ptr->joint_torque[jnt_ctr];
+        app_data_ptr->actual_position[jnt_ctr] = conv_to_actual_pos(joint_data_ptr->joint_position[jnt_ctr], jnt_ctr);
+        app_data_ptr->actual_velocity[jnt_ctr] = conv_to_actual_velocity(joint_data_ptr->joint_velocity[jnt_ctr], jnt_ctr);
+        app_data_ptr->actual_torque[jnt_ctr] = conv_to_actual_torque(joint_data_ptr->joint_torque[jnt_ctr], jnt_ctr);
     }
 
     app_data_ptr->sterile_detection = joint_data_ptr->sterile_detection_status;
@@ -134,14 +134,64 @@ void SafetyController::write_data()
 
     if (!system_state_data_ptr->trigger_error_mode && system_state_data_ptr->status_operation_enabled)
     {
+        system_state_data_ptr->drive_operation_mode = app_data_ptr->drive_operation_mode;
         for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
-            joint_data_ptr->target_position[jnt_ctr] = app_data_ptr->target_position[jnt_ctr];
-            joint_data_ptr->target_velocity[jnt_ctr] = app_data_ptr->target_velocity[jnt_ctr];
-            joint_data_ptr->target_torque[jnt_ctr] = app_data_ptr->target_torque[jnt_ctr];
+            joint_data_ptr->target_position[jnt_ctr] = conv_to_target_pos(app_data_ptr->target_position[jnt_ctr], jnt_ctr);
+            joint_data_ptr->target_velocity[jnt_ctr] = conv_to_target_velocity(app_data_ptr->target_velocity[jnt_ctr], jnt_ctr);
+            joint_data_ptr->target_torque[jnt_ctr] = conv_to_target_torque(app_data_ptr->target_torque[jnt_ctr], jnt_ctr);
         }
-
     }
 }
+
+int SafetyController::conv_to_target_pos(double rad, int jnt_ctr)
+{
+    // input in radians, output in encoder count (SEE Object 0x607A)
+    if (fabs(rad) > pos_limit[jnt_ctr]){
+        return (int)(enc_count[jnt_ctr] * gear_ratio[jnt_ctr] * (rad/fabs(rad) * pos_limit[jnt_ctr]) / (2 * M_PI));  
+    }
+    else{
+        return (int)(enc_count[jnt_ctr] * gear_ratio[jnt_ctr] * rad / (2 * M_PI)); 
+    }
+}
+
+double SafetyController::conv_to_actual_pos(int count, int jnt_ctr)
+{
+    // input in encoder count, Output in radians (SEE Object 0x6064)
+    return (count / (enc_count[jnt_ctr] * gear_ratio[jnt_ctr]) * (2 * M_PI)); 
+}
+
+int SafetyController::conv_to_target_velocity(double rad_sec, int jnt_ctr)
+{
+    // input in rad/sec, Output in rpm (SEE Object 0X60FF)
+    if( fabs(rad_sec) > vel_limit[jnt_ctr]){
+        return (int)( (rad_sec/fabs(rad_sec)*vel_limit[jnt_ctr]) / (2 * M_PI) * 60 * gear_ratio[jnt_ctr]);
+    }
+    else{
+        return (int)(rad_sec / (2 * M_PI) * 60 * gear_ratio[jnt_ctr]);
+    }
+}
+
+double SafetyController::conv_to_actual_velocity(int rpm, int jnt_ctr)
+{
+    // input in rpm , Output in rad/sec SEE Object (0x606C)
+    return (2 * M_PI * rpm / (60 * gear_ratio[jnt_ctr]));
+}
+
+int SafetyController::conv_to_target_torque(double torq_val, int jnt_ctr)
+{
+    // input is torque in N-m, Output is in per thousand of rated torque (SEE Object 0x6071)
+    if ( fabs(torq_val) > torque_limit[jnt_ctr]){
+        return (int)( (torq_val/fabs(torq_val)*torque_limit[jnt_ctr] ) / (rated_torque[jnt_ctr] * gear_ratio[jnt_ctr]) * 1000);
+    }
+    return (int)(torq_val / (rated_torque[jnt_ctr] * gear_ratio[jnt_ctr]) * 1000);
+}
+
+double SafetyController::conv_to_actual_torque(int torq_val, int jnt_ctr)
+{
+    // input torq in terms of per thousand of rated torque, Output is in N-m (SEE object 0x6077)
+    return (torq_val / 1000 * rated_torque[jnt_ctr] * gear_ratio[jnt_ctr]);
+}
+
 
 

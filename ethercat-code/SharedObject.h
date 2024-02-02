@@ -65,9 +65,9 @@ struct SystemStateData
 {
     void setZero()
     {
-        current_state = DriveState::ERROR;
+        drive_state = DriveState::ERROR;
         drive_operation_mode = OperationModeState::POSITION_MODE;
-        state = SafetyStates::INITIALIZE;
+        safety_state = SafetyStates::INITIALIZE;
         initialize_drives = false;
         switch_to_operation = false;
 
@@ -81,9 +81,9 @@ struct SystemStateData
         std::fill_n(drive_enable_for_operation, NUM_JOINTS, false);
     }
 
-    DriveState current_state;
+    DriveState drive_state;
     OperationModeState drive_operation_mode;
-    SafetyStates state;
+    SafetyStates safety_state;
     bool status_switched_on;
     bool status_operation_enabled;
     bool safety_controller_enabled;
