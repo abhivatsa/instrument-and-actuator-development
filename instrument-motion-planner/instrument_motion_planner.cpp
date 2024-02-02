@@ -151,24 +151,18 @@ int main()
                     {
 
                     }
-                    else if(commmand_data_ptr->type == CommandType::STERILE_ENGAGEMENT)
-                    {
-                        sterile_engagement();
-                        commmand_data_ptr->setNone();
-                    }
-                    else if(commmand_data_ptr->type == CommandType::INSTRUMENT_ENGAGEMENT)
-                    {
-
-                    }
                     else
                     {
 
                     }
 
+                    system_data_ptr->setSystemState(SystemState::READY);
+
                     if(app_data_ptr->trigger_error)
                     {
                         system_data_ptr->setSystemState(SystemState::ERROR);
                     }
+                    
                 }
                 break;
             }
@@ -195,16 +189,14 @@ int main()
     return 0;
 }
 
-int write_to_drive(double joint_pos[3], double joint_vel[3])
+int write_to_drive(double joint_pos[4])
 {
-    for (unsigned int jnt_ctr = 0; jnt_ctr < 3; jnt_ctr++)
+    for (unsigned int jnt_ctr = 0; jnt_ctr < 4; jnt_ctr++)
     {
         app_data_ptr->target_position[jnt_ctr] = joint_pos[jnt_ctr];
     }
-    std::cout<<"joint_pos 1 : "<<joint_pos[0]<<", joint_pos 2 : "<<joint_pos[1]<<", joint_pos 3 : "<<joint_pos[2]<<std::endl;
     return 0;
 }
-
 
 
 

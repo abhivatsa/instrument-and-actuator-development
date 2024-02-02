@@ -1,18 +1,14 @@
-#ifndef PT_TO_PT_PLANNER_H
-#define PT_TO_PT_PLANNER_H
+#pragma once
 
-#include "MotionPlanning/ForwardKinematics.h"
-#include "MotionPlanning/IK6AxisInline.h"
-#include "MotionPlanning/Jacobian.h"
 using namespace std;
 
-int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
+int pt_to_pt_mvmt(double ini_pos[NUM_JOINTS], double final_pos[4])
 {
 
-    int num_joints = 3;
+    int num_joints = 4;
 
-    double joint_vel[3] = {0.5, 0.5, 0.5};
-    double joint_acc[3] = {0.5, 0.5, 0.5};
+    double joint_vel[4] = {0.5, 0.5, 0.5, 0.5};
+    double joint_acc[4] = {0.5, 0.5, 0.5, 0.5};
 
     // taking care of vel and acceleration sign
     for (int jnt_ctr = 0; jnt_ctr < num_joints; jnt_ctr++)
@@ -83,9 +79,9 @@ int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
     }
 
     double t = 0;
-    double current_pos[3] = {0};
-    double current_vel[3] = {0};
-    double current_acc[3] = {0};
+    double current_pos[4] = {0};
+    double current_vel[4] = {0};
+    double current_acc[4] = {0};
 
     // std::cout << "max_time : " << max_time << std::endl;
 
@@ -160,12 +156,10 @@ int pt_to_pt_mvmt(double ini_pos[3], double final_pos[3])
         time_taken = (end.tv_sec - start.tv_sec) * 1e9;
         time_taken = (time_taken + (end.tv_nsec - start.tv_nsec)) * 1e-9;
 
-        write_to_drive(current_pos, current_vel);
+        write_to_drive(current_pos);
 
         usleep(2000);
     }
 
     return 0;
 }
-
-#endif
