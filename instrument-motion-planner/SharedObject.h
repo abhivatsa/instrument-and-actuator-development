@@ -31,8 +31,6 @@ enum class CommandType
     NONE,
     JOG,
     HAND_CONTROL,
-    STERILE_ENGAGEMENT,
-    INSTRUMENT_ENGAGEMENT
 };
 
 enum class OperationModeState
@@ -132,14 +130,6 @@ struct CommandData
     void setHandControl()
     {
         this->type = CommandType::HAND_CONTROL;
-    }
-    void setSterileEngagement()
-    {
-        this->type = CommandType::STERILE_ENGAGEMENT;
-    }
-    void setInstrumentEngagement()
-    {
-        this->type = CommandType::INSTRUMENT_ENGAGEMENT;
     }
     void setNone(){
         this->type = CommandType::NONE;

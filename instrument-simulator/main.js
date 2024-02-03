@@ -9,10 +9,10 @@ socket.onopen = function (e) {
 
 socket.onmessage = function (event) {
     // console.log(`[message] Data received from server`);
-    let incomint_data = JSON.parse(event.data);
-    // console.log(incomint_data)
-    updateRobotState(incomint_data.current_state.positions, incomint_data.current_state.velocities, incomint_data.current_state.torque);
-    updateSystemState(incomint_data.system_state);
+    let incoming_data = JSON.parse(event.data);
+    // console.log(incoming_data)
+    updateRobotState(incoming_data.current_state.positions, incoming_data.current_state.velocities, incoming_data.current_state.torque);
+    updateSystemState(incoming_data.system_state);
       
 };
 
@@ -33,82 +33,41 @@ socket.onerror = function (error) {
 // -----------------------------------------------------------------------------------------------------
 
 var current_time = 0;
-var joint_positions = [0,0,0];
-var joint_velocities = [0,0,0];
-var joint_torque = [0,0,0];
+var joint_positions = [0,0,0,0];
+var joint_velocities = [0,0,0,0];
+var joint_torque = [0,0,0,0];
 // Update robot state
 var update_cart_data_done = false;
 
-var sterile_detected = false;
-var sterile_engaged = false;
-var instrument_detected = false;
-var instrument_engaged = false;
-
-var sterile_detect_progress = 0;
-var sterile_engage_progress = 0;
-var instrument_detect_progress = 0;
-var instrument_engage_progress = 0;
 
 function updateRobotState(positions, velocities, torque)
 {
     joint_val_1.innerText = positions.joint1.toFixed(2);
     joint_val_2.innerText = positions.joint2.toFixed(2);
     joint_val_3.innerText = positions.joint3.toFixed(2);
+    joint_val_4.innerText = positions.joint4.toFixed(2);
 
     j1_slider.value = convertValToRange(positions.joint1, 0);
     j2_slider.value = convertValToRange(positions.joint2, 0);
     j3_slider.value = convertValToRange(positions.joint3, 0);
-
-
-    sterile_detect_progress = 0;
-    if(sterile_detect_progress >= 100.0)
-    {
-        sterile_detected = true;
-        instrument_detect_progress = 0;
-        instrument_engage_progress = 0;
-    }
-    if(sterile_detected)
-    {
-        sterile_engage_progress = 0;
-        instrument_detect_progress = 0;
-        instrument_engage_progress = 0;
-    }
-    if(sterile_detect_progress >= 100.0)
-    {
-        sterile_engaged = true;
-        instrument_detect_progress = 0;
-        instrument_engage_progress = 0;
-    }
-    if(sterile_engaged)
-    {
-        instrument_detect_progress = 0;
-    }
-    if(instrument_detect_progress>= 100.0)
-    {
-        instrument_detected = true;
-    }
-    if(instrument_detected)
-    {
-        instrument_engage_progress = 0;
-    }
-    if(instrument_engage_progress >= 100.0)
-    {
-        instrument_engaged = true;
-    }
+    j4_slider.value = convertValToRange(positions.joint4, 0);
 
 
     current_time = current_time + 0.001;
     joint_positions[0] = positions.joint1;
     joint_positions[1] = positions.joint2;
     joint_positions[2] = positions.joint3;
+    joint_positions[3] = positions.joint4;
 
     joint_velocities[0] = velocities.joint1;
     joint_velocities[1] = velocities.joint2;
     joint_velocities[2] = velocities.joint3;
+    joint_velocities[3] = velocities.joint4;
 
     joint_torque[0] = torque.joint1;
     joint_torque[1] = torque.joint2;
     joint_torque[2] = torque.joint3;
+    joint_torque[3] = torque.joint4;
 }
 
 function updateChartData()
@@ -119,28 +78,34 @@ function updateChartData()
         chart_position1.shift();
         chart_position2.shift();
         chart_position3.shift();
+        chart_position4.shift();
 
         chart_velocity1.shift();
         chart_velocity2.shift();
         chart_velocity3.shift();
+        chart_velocity4.shift();
 
         chart_torque1.shift();
         chart_torque2.shift();
         chart_torque3.shift();
+        chart_torque4.shift();
     }
 
     chart_x_data.push(current_time.toFixed(2));
     chart_position1.push(joint_positions[0].toFixed(2));
     chart_position2.push(joint_positions[1].toFixed(2));
     chart_position3.push(joint_positions[2].toFixed(2));
+    chart_position4.push(joint_positions[3].toFixed(2));
 
     chart_velocity1.push(joint_velocities[0].toFixed(2));
     chart_velocity2.push(joint_velocities[1].toFixed(2));
     chart_velocity3.push(joint_velocities[2].toFixed(2));
+    chart_velocity4.push(joint_velocities[3].toFixed(2));
 
     chart_torque1.push(joint_torque[0].toFixed(2));
     chart_torque2.push(joint_torque[1].toFixed(2));
     chart_torque3.push(joint_torque[2].toFixed(2));
+    chart_torque4.push(joint_torque[3].toFixed(2));
 
     mychart.data.labels = chart_x_data;
     if(show_chart_data == ShowChartData.Torque)
@@ -148,6 +113,7 @@ function updateChartData()
         mychart.data.datasets[0].data = chart_torque1;
         mychart.data.datasets[1].data = chart_torque2;
         mychart.data.datasets[2].data = chart_torque3;
+        mychart.data.datasets[3].data = chart_torque4;
 
         mychart.options.scales.yAxes[0].ticks.max = 10;
         mychart.options.scales.yAxes[0].ticks.min = -10;
@@ -158,9 +124,10 @@ function updateChartData()
         mychart.data.datasets[0].data = chart_velocity1;
         mychart.data.datasets[1].data = chart_velocity2;
         mychart.data.datasets[2].data = chart_velocity3;
+        mychart.data.datasets[3].data = chart_velocity4;
 
-        mychart.options.scales.yAxes[0].ticks.max = 3.14;
-        mychart.options.scales.yAxes[0].ticks.min = -3.14;
+        mychart.options.scales.yAxes[0].ticks.max = 4;
+        mychart.options.scales.yAxes[0].ticks.min = -4;
         mychart.options.scales.yAxes[0].scaleLabel.labelString = "Joint velocity (rad/s)";
     }
     else
@@ -168,9 +135,10 @@ function updateChartData()
         mychart.data.datasets[0].data = chart_position1;
         mychart.data.datasets[1].data = chart_position2;
         mychart.data.datasets[2].data = chart_position3;
+        mychart.data.datasets[3].data = chart_position4;
 
-        mychart.options.scales.yAxes[0].ticks.max = 3.14;
-        mychart.options.scales.yAxes[0].ticks.min = -3.14;
+        mychart.options.scales.yAxes[0].ticks.max = 4;
+        mychart.options.scales.yAxes[0].ticks.min = -4;
         mychart.options.scales.yAxes[0].scaleLabel.labelString = "Joint position (rad)";
     }
     mychart.update();
@@ -180,6 +148,7 @@ function updateChartData()
 var prev_state = 0;
 function updateSystemState(state) 
 {
+    console.log("state.power_on_status", state.power_on_status);
     if(prev_state == state.power_on_status)
     {
         return;
@@ -187,10 +156,7 @@ function updateSystemState(state)
     // update the data    
     if(state.power_on_status == 3) // power on
     {
-        if (sterile_engaged && instrument_engaged)
-        {
-            enableButtons(true);
-        }
+        enableButtons(true);
         enablePowerBtn(true);
         powerBtn.checked = true;
         // systemStateSpinner.classList.add("visually-hidden");
@@ -218,7 +184,7 @@ function updateSystemState(state)
         // systemStateSpinner.classList.remove("visually-hidden");
         systemStateText.innerHTML = "Initializing System...";
         system_state_progress.parentElement.classList.remove("visually-hidden");
-        system_state_progress.getAttribute("aria-valuenow") = 25;
+        // system_state_progress.getAttribute("aria-valuenow") = 25;
 
         console.log("Initializing System...");
     }
@@ -231,7 +197,7 @@ function updateSystemState(state)
         systemStateText.textContent = "Hardware check...";
 
         system_state_progress.parentElement.classList.remove("visually-hidden");
-        system_state_progress.getAttribute("aria-valuenow") = 50;
+        // system_state_progress.getAttribute("aria-valuenow") = 50;
 
         console.log("Hardware check...");
     }
@@ -239,7 +205,7 @@ function updateSystemState(state)
     {
         enableButtons(false);
         enablePowerBtn(false);
-        // systemStateSpinner.classList.remove("visually-hidden");
+        systemStateSpinner.classList.remove("visually-hidden");
         systemStateText.textContent = "Executing...";
 
         console.log("Executing...");
@@ -271,6 +237,7 @@ function onJogClicked(mode, index, dir)
     // send jog commands
     if(!checkState())
     {
+        console.log("mode", mode);
         var m = 2;
         if(mode == "joint_space")
         {
@@ -358,21 +325,25 @@ var buttons = [handControllerMode];
 var joint_val_1 = document.getElementById("joint_val_1");
 var joint_val_2 = document.getElementById("joint_val_2");
 var joint_val_3 = document.getElementById("joint_val_3");
+var joint_val_4 = document.getElementById("joint_val_4");
 
 // cartesian values
-var cart_val_x = document.getElementById("cart_val_x");
-var cart_val_y = document.getElementById("cart_val_y");
-var cart_val_z = document.getElementById("cart_val_z");
+var pitch_val = document.getElementById("pitch_val");
+var yaw_val = document.getElementById("yaw_val");
+var pinch_val = document.getElementById("pinch_val");
+var roll_val = document.getElementById("roll_val");
 
 // joint sliders
 var j1_slider = document.getElementById("slider_j1");
 var j2_slider = document.getElementById("slider_j2");
 var j3_slider = document.getElementById("slider_j3");
+var j4_slider = document.getElementById("slider_j4");
 
 // Cartesian Sliders
-var x_slider = document.getElementById("slider_x");
-var y_slider = document.getElementById("slider_y");
-var z_slider = document.getElementById("slider_z");
+var pitch_slider = document.getElementById("slider_pitch");
+var yaw_slider = document.getElementById("slider_yaw");
+var pinch_slider = document.getElementById("slider_pinch");
+var roll_slider = document.getElementById("slider_roll");
 
 var plot_position = document.getElementById("plot_position");
 var plot_velocity = document.getElementById("plot_velocity");
@@ -384,10 +355,6 @@ const systemStateSpinner = document.getElementById("systemStateSpinner");
 
 // progess bars
 const system_state_progress = document.getElementById("SystemStateProgess");
-const sterile_detect_progress_bar = document.getElementById("SterileDetectionProgess")
-const sterile_engage_progress_bar = document.getElementById("SterileEngagementProgess")
-const instrument_detect_progress_bar = document.getElementById("InstrumentDetectionProgess")
-const instrument_engage_progress_bar = document.getElementById("InstrumentEngagementProgess")
 
 // enable disble the buttons
 function enableButtons(state) 
@@ -461,14 +428,18 @@ var y_axis_label = "Joint Position (rad)";
 var chart_position1 = Array(10).fill(0);
 var chart_position2 = Array(10).fill(0);
 var chart_position3 = Array(10).fill(0);
+var chart_position4 = Array(10).fill(0);
 
 var chart_velocity1 = Array(10).fill(0);
 var chart_velocity2 = Array(10).fill(0);
 var chart_velocity3 = Array(10).fill(0);
+var chart_velocity4 = Array(10).fill(0);
 
 var chart_torque1 = Array(10).fill(0);
 var chart_torque2 = Array(10).fill(0);
 var chart_torque3 = Array(10).fill(0);
+var chart_torque4 = Array(10).fill(0);
+
 
 const ShowChartData = {
     Position: 'position',
@@ -500,6 +471,12 @@ var mychart = new Chart("myChart", {
         borderColor: "blue",
         fill: false,
         label: 'joint 3',
+        radius: 1
+        },{
+        data: Array(10).fill(0),
+        borderColor: "yellow",
+        fill: false,
+        label: 'joint 4',
         radius: 1
         }
 ]
