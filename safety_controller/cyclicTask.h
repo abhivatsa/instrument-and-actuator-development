@@ -38,6 +38,7 @@ void SafetyController::periodic_task_init(struct period_info *pinfo)
 
 void SafetyController::do_rt_task()
 {
+    // move initialize out of real
     switch (systemStateDataPtr->safety_state)
     {
     case SafetyStates::INITIALIZE:

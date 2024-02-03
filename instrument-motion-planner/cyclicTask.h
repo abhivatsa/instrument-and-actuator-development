@@ -1,6 +1,6 @@
 #pragma once
 
-#include "instrument_motion_planner.h"
+#include "instrument_jog.h"
 
 void InstrumentMotionPlanner::cyclicTask()
 {

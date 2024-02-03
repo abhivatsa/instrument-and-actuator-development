@@ -39,7 +39,7 @@ void EthercatMaster::cyclicTask()
 
     periodic_task_init(&pinfo);
 
-    while (!exitFlag)
+    while (!exitFlag && systemStateDataPtr->safety_controller_enabled)
     {
 
         ecrt_master_application_time(master, ((uint64_t)pinfo.next_period.tv_sec * 1000000000 + pinfo.next_period.tv_nsec));
@@ -51,8 +51,7 @@ void EthercatMaster::cyclicTask()
         wait_rest_of_period(&pinfo);
     }
 
-    struct timespec wakeupTime;
-    clock_gettime(CLOCK_MONOTONIC, &wakeupTime);
+    return;
 }
 
 void EthercatMaster::do_rt_task()
@@ -80,33 +79,32 @@ void EthercatMaster::initializeDrives()
 {
     int all_drives_enabled = 0;
 
-    for (size_t jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
+    if (systemStateDataPtr->initialize_drives == true) // Waiting for command to initialize the Drives
     {
-        StatusWordValues drive_state = readDriveState(jnt_ctr);
 
-        if (systemStateDataPtr->initialize_drives == true) // Waiting for command to initialize the Drives
+        for (size_t jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
+            StatusWordValues drive_statusWord = readDriveState(jnt_ctr);
 
-            if (drive_state == StatusWordValues::SW_FAULT_REACTION_ACTIVE || drive_state == StatusWordValues::SW_FAULT)
+            switch (drive_statusWord)
             {
+            case StatusWordValues::SW_FAULT_REACTION_ACTIVE:
                 systemStateDataPtr->drive_state = DriveState::ERROR;
-                std::cout << "Drive inside error \n";
                 return;
-            }
-
-            if (drive_state == StatusWordValues::SW_SWITCH_ON_DISABLED)
-            {
+                break;
+            case StatusWordValues::SW_FAULT:
+                systemStateDataPtr->drive_state = DriveState::ERROR;
+                return;
+                break;
+            case StatusWordValues::SW_SWITCH_ON_DISABLED:
                 transitionToState(ControlWordValues::CW_SHUTDOWN, jnt_ctr);
-            }
-
-            if (drive_state == StatusWordValues::SW_READY_TO_SWITCH_ON)
-            {
+                break;
+            case StatusWordValues::SW_READY_TO_SWITCH_ON:
                 transitionToState(ControlWordValues::CW_SWITCH_ON, jnt_ctr);
-            }
-
-            if (drive_state == StatusWordValues::SW_SWITCHED_ON)
-            {
+                break;
+            case StatusWordValues::SW_SWITCHED_ON:
                 all_drives_enabled++;
+                break;
             }
         }
     }
@@ -158,7 +156,7 @@ void EthercatMaster::handleSwitchedOnState()
     }
     else
     {
-        systemStateDataPtr->drive_state = DriveState::INITIALIZE;
+        systemStateDataPtr->drive_state = DriveState::ERROR;
         return;
     }
 }
@@ -200,7 +198,7 @@ void EthercatMaster::handleOperationEnabledState()
     }
     else
     {
-        systemStateDataPtr->drive_state = DriveState::INITIALIZE;
+        systemStateDataPtr->drive_state = DriveState::ERROR;
         return;
     }
 }
@@ -236,6 +234,8 @@ void EthercatMaster::handleErrorState()
 {
 
     int all_drives_switched_on = 0;
+
+    // Reset Mode of Operation for all the Drives, maybe not required as
 
     for (size_t jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {

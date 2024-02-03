@@ -2,7 +2,9 @@
 
 using namespace std;
 
-int pt_to_pt_mvmt(double ini_pos[NUM_JOINTS], double final_pos[4])
+#include "instrument_motion_planner.h"
+
+int InstrumentMotionPlanner::pt_to_pt_mvmt(double ini_pos[NUM_JOINTS], double final_pos[4])
 {
 
     int num_joints = 4;

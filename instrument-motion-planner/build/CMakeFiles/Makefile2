@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/abhishek/Documents/instrument-devel-app/instrument-motion-planner
+CMAKE_SOURCE_DIR = /home/abhishek/instrument-devel-app/instrument-motion-planner
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/abhishek/Documents/instrument-devel-app/instrument-motion-planner/build
+CMAKE_BINARY_DIR = /home/abhishek/instrument-devel-app/instrument-motion-planner/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -81,14 +81,14 @@ clean: CMakeFiles/instrument_motion_planner.dir/clean
 CMakeFiles/instrument_motion_planner.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/instrument_motion_planner.dir/build.make CMakeFiles/instrument_motion_planner.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/instrument_motion_planner.dir/build.make CMakeFiles/instrument_motion_planner.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/abhishek/Documents/instrument-devel-app/instrument-motion-planner/build/CMakeFiles --progress-num=1,2 "Built target instrument_motion_planner"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/abhishek/instrument-devel-app/instrument-motion-planner/build/CMakeFiles --progress-num=1,2 "Built target instrument_motion_planner"
 .PHONY : CMakeFiles/instrument_motion_planner.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/instrument_motion_planner.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/instrument-motion-planner/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/instrument-devel-app/instrument-motion-planner/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/instrument_motion_planner.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/instrument-motion-planner/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/instrument-devel-app/instrument-motion-planner/build/CMakeFiles 0
 .PHONY : CMakeFiles/instrument_motion_planner.dir/rule
 
 # Convenience name for target.

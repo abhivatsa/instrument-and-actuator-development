@@ -1,6 +1,5 @@
 #pragma once
 
-#include "pt_to_pt_planner.h"
 #include "instrument_motion_planner.h"
 
 double InstrumentMotionPlanner::jog(int index, int dir, int type)
@@ -8,20 +7,18 @@ double InstrumentMotionPlanner::jog(int index, int dir, int type)
     if (type == 0) // joint space
     {
         /* code */
-        double command_pos[4];
-        double command_vel[4] = {0, 0, 0, 0};
-        // std::copy(std::begin(appDataPtr->actual_position), std::end(appDataPtr->actual_position), std::begin(command_pos));
+        double command_pos[NUM_JOINTS];
+        double command_vel[NUM_JOINTS] = {0, 0, 0, 0};
         command_pos[index] = appDataPtr->actual_position[index] + dir * 0.001;
         write_to_drive(command_pos);
-        usleep(1000);
     }
     else if (type == 1)// task space
     {
         double vel = 4.0;
-        double ini_pos[4];
-        double final_pos[4];
+        double ini_pos[NUM_JOINTS];
+        double final_pos[NUM_JOINTS];
         double time = 0;
-        for (int jnt_ctr = 0; jnt_ctr < 4; jnt_ctr++)
+        for (int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
             ini_pos[jnt_ctr] = appDataPtr->actual_position[jnt_ctr];
             final_pos[jnt_ctr] = ini_pos[jnt_ctr];
@@ -104,6 +101,8 @@ double InstrumentMotionPlanner::jog(int index, int dir, int type)
             final_pos[2] = ini_pos[2];
             final_pos[3] = ini_pos[3];
         }
+
+        write_to_drive(final_pos);
     }
     else{
 

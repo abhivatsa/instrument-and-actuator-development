@@ -33,9 +33,8 @@ private:
     void cyclicTask();
     static void signalHandler(int signum);
 
-    int changeSystemState();
-    int write_to_drive(double joint_pos[NUM_JOINTS], double joint_vel[NUM_JOINTS]);
-    double sterile_engagement();
+    // double sterile_engagement();
+    // int pt_to_pt_mvmt(double ini_pos[NUM_JOINTS], double final_pos[NUM_JOINTS]);
     double jog(int index, int dir, int type);
     void Jog();
     int write_to_drive(double joint_pos[4]);

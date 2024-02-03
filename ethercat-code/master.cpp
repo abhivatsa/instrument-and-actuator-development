@@ -180,7 +180,17 @@ void EthercatMaster::run()
     // Set real-time interval for the master
     ecrt_master_set_send_interval(master, 1000);
 
+    printf("Waiting for Safety Controller to get Started ...\n");
+    while (!systemStateDataPtr->safety_controller_enabled)
+    {
+        // Make a semaphore lock to open, Easy way out is sleep
+    }
+
+    printf("Safety Controller Started \n");
+
     cyclicTask();
+
+    
 }
 
 void EthercatMaster::stackPrefault()
@@ -283,13 +293,6 @@ void EthercatMaster::initializeSharedData()
 {
     jointDataPtr->setZero();
     systemStateDataPtr->setZero();
-
-    printf("Waiting for Safety Controller to get Started ...\n");
-    while (!systemStateDataPtr->safety_controller_enabled)
-    {
-    }
-
-    printf("Safety Controller Started \n");
 }
 
 void EthercatMaster::checkDomainState()
