@@ -49,7 +49,7 @@ void SafetyController::run(){
         perror("sched_setscheduler failed");
     }
 
-    system_state_data_ptr->safety_controller_enabled = true;
+    systemStateDataPtr->safety_controller_enabled = true;
 
     cyclicTask();
 
@@ -111,7 +111,7 @@ void SafetyController::initializeSharedData()
 {
     jointDataPtr->setZero();
     systemStateDataPtr->setZero();
-    app_data_ptr->setZero();
+    appDataPtr->setZero();
 }
 
 
@@ -120,26 +120,26 @@ void SafetyController::read_data()
 
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
-        app_data_ptr->actual_position[jnt_ctr] = conv_to_actual_pos(joint_data_ptr->joint_position[jnt_ctr], jnt_ctr);
-        app_data_ptr->actual_velocity[jnt_ctr] = conv_to_actual_velocity(joint_data_ptr->joint_velocity[jnt_ctr], jnt_ctr);
-        app_data_ptr->actual_torque[jnt_ctr] = conv_to_actual_torque(joint_data_ptr->joint_torque[jnt_ctr], jnt_ctr);
+        appDataPtr->actual_position[jnt_ctr] = conv_to_actual_pos(jointDataPtr->joint_position[jnt_ctr], jnt_ctr);
+        appDataPtr->actual_velocity[jnt_ctr] = conv_to_actual_velocity(jointDataPtr->joint_velocity[jnt_ctr], jnt_ctr);
+        appDataPtr->actual_torque[jnt_ctr] = conv_to_actual_torque(jointDataPtr->joint_torque[jnt_ctr], jnt_ctr);
     }
 
-    app_data_ptr->sterile_detection = joint_data_ptr->sterile_detection_status;
-    app_data_ptr->instrument_detection = joint_data_ptr->instrument_detection_status;
+    appDataPtr->sterile_detection = jointDataPtr->sterile_detection_status;
+    appDataPtr->instrument_detection = jointDataPtr->instrument_detection_status;
 }
 
 void SafetyController::write_data()
 {
 
-    if (!system_state_data_ptr->trigger_error_mode && system_state_data_ptr->status_operation_enabled)
+    if (!systemStateDataPtr->trigger_error_mode && systemStateDataPtr->status_operation_enabled)
     {
-        system_state_data_ptr->drive_operation_mode = app_data_ptr->drive_operation_mode;
+        systemStateDataPtr->drive_operation_mode = appDataPtr->drive_operation_mode;
         for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
-            joint_data_ptr->target_position[jnt_ctr] = conv_to_target_pos(app_data_ptr->target_position[jnt_ctr], jnt_ctr);
-            joint_data_ptr->target_velocity[jnt_ctr] = conv_to_target_velocity(app_data_ptr->target_velocity[jnt_ctr], jnt_ctr);
-            joint_data_ptr->target_torque[jnt_ctr] = conv_to_target_torque(app_data_ptr->target_torque[jnt_ctr], jnt_ctr);
+            jointDataPtr->target_position[jnt_ctr] = conv_to_target_pos(appDataPtr->target_position[jnt_ctr], jnt_ctr);
+            jointDataPtr->target_velocity[jnt_ctr] = conv_to_target_velocity(appDataPtr->target_velocity[jnt_ctr], jnt_ctr);
+            jointDataPtr->target_torque[jnt_ctr] = conv_to_target_torque(appDataPtr->target_torque[jnt_ctr], jnt_ctr);
         }
     }
 }

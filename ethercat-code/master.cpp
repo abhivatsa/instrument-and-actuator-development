@@ -106,13 +106,13 @@ EthercatMaster::~EthercatMaster()
     }
 
     // Release shared memory
-    if (joint_data_ptr != nullptr)
+    if (jointDataPtr != nullptr)
     {
-        munmap(joint_data_ptr, sizeof(JointData));
+        munmap(jointDataPtr, sizeof(JointData));
     }
-    if (system_state_data_ptr != nullptr)
+    if (systemStateDataPtr != nullptr)
     {
-        munmap(system_state_data_ptr, sizeof(SystemStateData));
+        munmap(systemStateDataPtr, sizeof(SystemStateData));
     }
 }
 

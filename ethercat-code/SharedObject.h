@@ -9,7 +9,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-constexpr int NUM_JOINTS = 3; // Change this to the desired number of joints
+constexpr int NUM_JOINTS = 4; // Change this to the desired number of joints
 
 struct JointData
 {
@@ -94,6 +94,3 @@ struct SystemStateData
     bool switch_to_operation;
     bool drive_enable_for_operation[NUM_JOINTS];
 };
-
-JointData *joint_data_ptr;
-SystemStateData *system_state_data_ptr;

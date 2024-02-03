@@ -10,7 +10,7 @@ double sterile_engagement()
 
     for (unsigned int jnt_ctr = 0; jnt_ctr < 4; jnt_ctr++)
     {
-        ini_pos[jnt_ctr] = app_data_ptr->actual_position[jnt_ctr];
+        ini_pos[jnt_ctr] = appDataPtr->actual_position[jnt_ctr];
         final_pos[jnt_ctr] = ini_pos[jnt_ctr] + (2 * M_PI + 0.02);
     }
 

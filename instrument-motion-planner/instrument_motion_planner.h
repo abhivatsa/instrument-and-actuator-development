@@ -1,12 +1,27 @@
 #pragma once
 
 #include "SharedObject.h"
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <bits/stdc++.h>
+#include <sys/time.h>
+
+#define MAX_SAFE_STACK (8 * 1024) /* The maximum stack size which is  \
+                                     guranteed safe to access without \
+                                     faulting */
+
+volatile sig_atomic_t exitFlag = 0;
 
 class InstrumentMotionPlanner
 {
 public:
     InstrumentMotionPlanner();
     ~InstrumentMotionPlanner();
+    void run();
 
 private:
     SystemData *systemDataPtr;

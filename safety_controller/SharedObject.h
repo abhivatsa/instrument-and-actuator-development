@@ -26,8 +26,6 @@ enum class OperationModeState
 enum class SafetyStates
 {
     INITIALIZE,
-    INITIALIZE_DRIVES,
-    SAFETY_CHECK,
     READY_FOR_OPERATION,
     OPERATION,
     ERROR,
@@ -147,7 +145,3 @@ struct AppData
     bool operation_enable_status;
     bool reset_error;
 };
-
-JointData *joint_data_ptr;
-SystemStateData *system_state_data_ptr;
-AppData *app_data_ptr;

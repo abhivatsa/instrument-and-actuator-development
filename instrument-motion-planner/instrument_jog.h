@@ -3,7 +3,7 @@
 #include "pt_to_pt_planner.h"
 #include "instrument_motion_planner.h"
 
-double jog(int index, int dir, int type)
+double InstrumentMotionPlanner::jog(int index, int dir, int type)
 {
     if (type == 0) // joint space
     {
@@ -111,7 +111,7 @@ double jog(int index, int dir, int type)
     return 1;
 }
 
-void Jog()
+void InstrumentMotionPlanner::Jog()
 {
     appDataPtr->drive_operation_mode = OperationModeState::POSITION_MODE;
     while (commandDataPtr->jog_data.type == 0)

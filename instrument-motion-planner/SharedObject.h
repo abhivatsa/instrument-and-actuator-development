@@ -11,8 +11,6 @@ constexpr int NUM_JOINTS = 4; // Change this to the desired number of joints
 enum class SystemState
 {
     POWER_OFF,
-    INITIALIZING_SYSTEM,
-    HARWARE_CHECK,
     READY,
     IN_EXECUTION,
     RECOVERY,
