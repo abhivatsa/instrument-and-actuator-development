@@ -11,6 +11,31 @@
 
 constexpr int NUM_JOINTS = 4; // Change this to the desired number of joints
 
+enum class DriveState
+{
+    INITIALIZE,
+    NOT_READY_TO_SWITCH_ON,
+    SWITCHED_ON,
+    OPERATION_ENABLED,
+    ERROR,
+};
+
+enum class OperationModeState
+{
+    POSITION_MODE = 8,
+    VELOCITY_MODE = 9,
+    TORQUE_MODE = 10,
+};
+
+enum class SafetyStates
+{
+    INITIALIZE,
+    READY_FOR_OPERATION,
+    OPERATION,
+    ERROR,
+    RECOVERY,
+};
+
 struct JointData
 {
     void setZero()
@@ -33,32 +58,6 @@ struct JointData
     double target_torque[NUM_JOINTS];
     bool sterile_detection_status;
     bool instrument_detection_status;
-};
-
-enum class DriveState
-{
-    INITIALIZE,
-    NOT_READY_TO_SWITCH_ON,
-    SWITCHED_ON,
-    OPERATION_ENABLED,
-    ERROR,
-};
-
-enum class OperationModeState
-{
-    POSITION_MODE = 8,
-    VELOCITY_MODE = 9,
-    TORQUE_MODE = 10,
-};
-
-enum class SafetyStates
-{
-    INITIALIZE,
-    INITIALIZE_DRIVES,
-    SAFETY_CHECK,
-    READY_FOR_OPERATION,
-    OPERATION,
-    ERROR,
 };
 
 struct SystemStateData

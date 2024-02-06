@@ -6,5 +6,5 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lrt")
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 add_executable(without_gui without_gui.cpp without_gui.h)
-target_link_libraries (without_gui Eigen3::Eigen MotionPlanning)
+target_link_libraries (without_gui Eigen3::Eigen)
 

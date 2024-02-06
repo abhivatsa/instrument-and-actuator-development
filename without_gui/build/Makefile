@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/abhishek/Documents/instrument-devel-app/without_gui
+CMAKE_SOURCE_DIR = /home/abhishek/instrument-devel-app/without_gui
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/abhishek/Documents/instrument-devel-app/without_gui/build
+CMAKE_BINARY_DIR = /home/abhishek/instrument-devel-app/without_gui/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/without_gui/build/CMakeFiles /home/abhishek/Documents/instrument-devel-app/without_gui/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/instrument-devel-app/without_gui/build/CMakeFiles /home/abhishek/instrument-devel-app/without_gui/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/Documents/instrument-devel-app/without_gui/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/abhishek/instrument-devel-app/without_gui/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

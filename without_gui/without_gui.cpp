@@ -10,42 +10,61 @@
 
 int main()
 {
-    /* the size (in bytes) of shared memory object */
-    const int SIZE_SysData = sizeof(SystemData);
-    const int SIZE_AppData = sizeof(AppData);
-    const int SIZE_ComData = sizeof(CommandData);
-
-    int shm_fd_SysData;
-    double shm_fd_AppData;
-    double shm_fd_ComData;
-
-    /* open the shared memory object */
-    shm_fd_SysData = shm_open("SysData", O_CREAT | O_RDWR, 0666);
-    shm_fd_AppData = shm_open("AppData", O_CREAT | O_RDWR, 0666);
-    shm_fd_ComData = shm_open("ComData", O_CREAT | O_RDWR, 0666);
-
-    ftruncate(shm_fd_SysData, SIZE_SysData);
-    ftruncate(shm_fd_AppData, SIZE_AppData);
-    ftruncate(shm_fd_ComData, SIZE_ComData);
-
-    system_data_ptr = static_cast<SystemData *>(mmap(0, SIZE_SysData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SysData, 0));
-    app_data_ptr = static_cast<AppData *>(mmap(0, SIZE_AppData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_AppData, 0));
-    commmand_data_ptr = static_cast<CommandData *>(mmap(0, SIZE_ComData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_ComData, 0));
-
-
-    system_data_ptr->setSystemState(SystemState::POWER_OFF);
-    system_data_ptr->request = 0;
-    app_data_ptr->setZero();
-    commmand_data_ptr->type = CommandType::NONE;
-
+    configureSharedMemory();
     sleep(2);
 
-    system_data_ptr->request = 1;
+    systemDataPtr->request = 1;
 
-    while (!(app_data_ptr->operation_enable_status)){
+    while (!(appDataPtr->operation_enable_status)){
         sleep(1);
     }
 
-    commmand_data_ptr->setSterileEngagement();
+    commandDataPtr->setNone();
 
+}
+
+void configureSharedMemory()
+{
+    int shm_fd_systemData;
+    int shm_fd_appData;
+    int shm_fd_commandData;
+
+    createSharedMemory(shm_fd_systemData, "SystemData", sizeof(SystemData));
+    createSharedMemory(shm_fd_appData, "AppData", sizeof(AppData));
+    createSharedMemory(shm_fd_commandData, "CommandData", sizeof(CommandData));
+
+    mapSharedMemory((void *&)systemDataPtr, shm_fd_systemData, sizeof(SystemData));
+    mapSharedMemory((void *&)appDataPtr, shm_fd_appData, sizeof(AppData));
+    mapSharedMemory((void *&)commandDataPtr, shm_fd_commandData, sizeof(CommandData));
+
+    initializeSharedData();
+}
+
+void createSharedMemory(int &shm_fd, const char *name, int size)
+{
+    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+    if (shm_fd == -1)
+    {
+        throw std::runtime_error("Failed to create shared memory object.");
+    }
+    ftruncate(shm_fd, size);
+}
+
+void mapSharedMemory(void *&ptr, int shm_fd, int size)
+{
+    ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    if (ptr == MAP_FAILED)
+    {
+        throw std::runtime_error("Failed to map shared memory.");
+    }
+}
+
+void initializeSharedData()
+{
+    // systemDataPtr->setZero();
+    // commandDataPtr->setZero();
+    systemDataPtr->setSystemState(SystemState::POWER_OFF);
+    systemDataPtr->request = 0;
+    appDataPtr->setZero();
+    commandDataPtr->type = CommandType::NONE;
 }

@@ -41,14 +41,16 @@ void EthercatMaster::cyclicTask()
 
     while (!exitFlag && systemStateDataPtr->safety_controller_enabled)
     {
-
         ecrt_master_application_time(master, ((uint64_t)pinfo.next_period.tv_sec * 1000000000 + pinfo.next_period.tv_nsec));
         ecrt_master_receive(master);
         ecrt_domain_process(domain);
         checkDomainState();
         checkMasterState();
         do_rt_task();
+        ecrt_domain_queue(domain);
+        ecrt_master_send(master);
         wait_rest_of_period(&pinfo);
+
     }
 
     return;
@@ -81,7 +83,6 @@ void EthercatMaster::initializeDrives()
 
     if (systemStateDataPtr->initialize_drives == true) // Waiting for command to initialize the Drives
     {
-
         for (size_t jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
             StatusWordValues drive_statusWord = readDriveState(jnt_ctr);
@@ -117,7 +118,6 @@ void EthercatMaster::initializeDrives()
 
 void EthercatMaster::handleSwitchedOnState()
 {
-
     int all_drives_switched_on = 0;
 
     for (size_t jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
@@ -129,6 +129,7 @@ void EthercatMaster::handleSwitchedOnState()
             all_drives_switched_on++;
         }
     }
+
 
     if (all_drives_switched_on == NUM_JOINTS)
     {
@@ -207,7 +208,6 @@ void EthercatMaster::handlePositionMode()
 {
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
-
         EC_WRITE_U16(domainPd + driveOffset[jnt_ctr].modes_of_operation, 8);
         EC_WRITE_S32(domainPd + driveOffset[jnt_ctr].target_position, jointDataPtr->target_position[jnt_ctr]);
     }
@@ -232,7 +232,6 @@ void EthercatMaster::handleTorqueMode()
 
 void EthercatMaster::handleErrorState()
 {
-
     int all_drives_switched_on = 0;
 
     // Reset Mode of Operation for all the Drives, maybe not required as

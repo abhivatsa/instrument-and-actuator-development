@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/abhishek/Documents/instrument-devel-app/without_gui/without_gui.cpp" "CMakeFiles/without_gui.dir/without_gui.cpp.o" "gcc" "CMakeFiles/without_gui.dir/without_gui.cpp.o.d"
+  "/home/abhishek/instrument-devel-app/without_gui/without_gui.cpp" "CMakeFiles/without_gui.dir/without_gui.cpp.o" "gcc" "CMakeFiles/without_gui.dir/without_gui.cpp.o.d"
   )
 
 # Targets to which this target links.

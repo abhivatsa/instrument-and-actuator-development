@@ -80,10 +80,6 @@ void InstrumentMotionPlanner::do_rt_task()
         else
         {
         }
-        // if (appDataPtr->trigger_error)
-        // {
-        //     systemDataPtr->setSystemState(SystemState::ERROR);
-        // }
         break;
     case SystemState::RECOVERY:
         break;

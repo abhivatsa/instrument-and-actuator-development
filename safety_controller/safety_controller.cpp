@@ -123,6 +123,8 @@ void SafetyController::read_data()
         appDataPtr->actual_position[jnt_ctr] = conv_to_actual_pos(jointDataPtr->joint_position[jnt_ctr], jnt_ctr);
         appDataPtr->actual_velocity[jnt_ctr] = conv_to_actual_velocity(jointDataPtr->joint_velocity[jnt_ctr], jnt_ctr);
         appDataPtr->actual_torque[jnt_ctr] = conv_to_actual_torque(jointDataPtr->joint_torque[jnt_ctr], jnt_ctr);
+
+        // std::cout<<"jointDataPtr->joint_position[jnt_ctr] : "<<jointDataPtr->joint_position[jnt_ctr]<<std::endl;
     }
 
     appDataPtr->sterile_detection = jointDataPtr->sterile_detection_status;

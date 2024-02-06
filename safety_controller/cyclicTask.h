@@ -48,34 +48,35 @@ void SafetyController::do_rt_task()
             if (appDataPtr->initialize_system) // motion planner initialized?
             {
                 systemStateDataPtr->initialize_drives = true;
-                if (systemStateDataPtr->drive_state == DriveState::SWITCHED_ON)
-                {
-                    appDataPtr->drive_initialized = true;
-                    if (systemStateDataPtr->start_safety_check)
-                    {
-                        read_data();
-                        if (check_limits())
-                        {
-                            appDataPtr->trigger_error = false;
-                            systemStateDataPtr->safety_state = SafetyStates::READY_FOR_OPERATION;
-                        }
-                        else
-                        {
-                            appDataPtr->trigger_error = true;
-                            systemStateDataPtr->safety_state = SafetyStates::RECOVERY;
-                        }
-                        systemStateDataPtr->safety_check_done = true;
-                    }
-                }
-
-                if (systemStateDataPtr->drive_state == DriveState::ERROR)
-                {
-                    // Take a command to reset Error From User
-                    // appDataPtr->drive_initialized = true;
-                    // do someting
-                }
             }
         }
+
+        if (systemStateDataPtr->drive_state == DriveState::SWITCHED_ON)
+        {
+            appDataPtr->drive_initialized = true;
+            if (systemStateDataPtr->start_safety_check)
+            {
+                read_data();
+                if (check_limits())
+                {
+                    appDataPtr->trigger_error = false;
+                    systemStateDataPtr->safety_state = SafetyStates::READY_FOR_OPERATION;
+                }
+                else
+                {
+                    appDataPtr->trigger_error = true;
+                    systemStateDataPtr->safety_state = SafetyStates::RECOVERY;
+                }
+                systemStateDataPtr->safety_check_done = true;
+            }
+        }
+
+        // if (systemStateDataPtr->drive_state == DriveState::ERROR)
+        // {
+        //     // Take a command to reset Error From User
+        //     // appDataPtr->drive_initialized = true;
+        //     // do someting
+        // }
         break;
     case SafetyStates::READY_FOR_OPERATION:
         check_limits();
@@ -90,6 +91,7 @@ void SafetyController::do_rt_task()
 
         if (appDataPtr->switch_to_operation) // switch to operation? from motion planner
         {
+
             systemStateDataPtr->switch_to_operation = true;
             if (systemStateDataPtr->drive_state == DriveState::OPERATION_ENABLED)
             {

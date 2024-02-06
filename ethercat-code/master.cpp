@@ -43,6 +43,8 @@ EthercatMaster::EthercatMaster()
     {
         ec_slave_config_t *sc;
 
+        std::cout<<"configuring joint jnt_ctr : "<<jnt_ctr<<std::endl;
+
         if (!(sc = ecrt_master_slave_config(master, 0, jnt_ctr, ingeniaDenalliXcr)))
         {
             fprintf(stderr, "Failed to get slave configuration.\n");
@@ -57,8 +59,8 @@ EthercatMaster::EthercatMaster()
             {0, jnt_ctr, ingeniaDenalliXcr, 0x6061, 0, &driveOffset[jnt_ctr].mode_of_operation_display}, // 6061 0 mode_of_operation_display
             {0, jnt_ctr, ingeniaDenalliXcr, 0x6064, 0, &driveOffset[jnt_ctr].position_actual_value},     // 6064 0 pos_act_val
             {0, jnt_ctr, ingeniaDenalliXcr, 0x606C, 0, &driveOffset[jnt_ctr].velocity_actual_value},     // 606C 0 vel_act_val
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6077, 0, &driveOffset[jnt_ctr].torque_actual_value},       // 6077 0 torq_act_val
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x2600, 0, &driveOffset[jnt_ctr].digital_input_value},       // 60FD 0 digital_input_value
+            {0, jnt_ctr, ingeniaDenalliXcr, 0x6077, 0, &driveOffset[jnt_ctr].torque_actual_value},       // 6077 0 torq_act_val check this
+            {0, jnt_ctr, ingeniaDenalliXcr, 0x2600, 0, &driveOffset[jnt_ctr].digital_input_value},       // 60FD 0 digital_input_value check this
             {0, jnt_ctr, ingeniaDenalliXcr, 0x603F, 0, &driveOffset[jnt_ctr].error_code},                // 603F 0 digital_input_value
             {0, jnt_ctr, ingeniaDenalliXcr, 0x6040, 0, &driveOffset[jnt_ctr].controlword},               // 6040 0 control word
             {0, jnt_ctr, ingeniaDenalliXcr, 0x6060, 0, &driveOffset[jnt_ctr].modes_of_operation},        // 6060 0 mode_of_operation
@@ -69,7 +71,7 @@ EthercatMaster::EthercatMaster()
             {0, jnt_ctr, ingeniaDenalliXcr, 0x60B1, 0, &driveOffset[jnt_ctr].velocity_offset}, // 60B2 0 torque offset
             {}};
 
-        ecrt_slave_config_dc(sc, 0x0300, 1000000, 0, 0, 0);
+        // ecrt_slave_config_dc(sc, 0x0300, 1000000, 0, 0, 0);
 
         /** Registers a bunch of PDO entries for a domain.
          *
@@ -181,9 +183,10 @@ void EthercatMaster::run()
     ecrt_master_set_send_interval(master, 1000);
 
     printf("Waiting for Safety Controller to get Started ...\n");
-    while (!systemStateDataPtr->safety_controller_enabled)
+    while (!systemStateDataPtr->safety_controller_enabled && !exitFlag)
     {
         // Make a semaphore lock to open, Easy way out is sleep
+        sleep(1);
     }
 
     printf("Safety Controller Started \n");
@@ -244,6 +247,7 @@ void EthercatMaster::pdoMapping(ec_slave_config_t *sc)
 
     ecrt_slave_config_pdo_mapping_add(sc, 0x1A01, 0x2600, 0, 32); /* 0x60FD:0/32bits, Digital Inputs */
     ecrt_slave_config_pdo_mapping_add(sc, 0x1A01, 0x603F, 0, 16); /* 0x603F:0/16bits, Error Code */
+
 }
 
 void EthercatMaster::signalHandler(int signum)
@@ -254,6 +258,7 @@ void EthercatMaster::signalHandler(int signum)
         std::cout << "Signal received: " << signum << std::endl;
         exitFlag = 1; // Set the flag to indicate the signal was received
     }
+
 }
 
 void EthercatMaster::configureSharedMemory()
