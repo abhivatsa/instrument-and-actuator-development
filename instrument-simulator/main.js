@@ -154,7 +154,19 @@ function updateSystemState(state)
         return;
     }
     // update the data    
-    if(state.power_on_status == 3) // power on
+    if(state.power_on_status == 0) // power off
+    {
+        enableButtons(false);
+        enablePowerBtn(true);
+
+        // systemStateSpinner.classList.add("visually-hidden");
+        system_state_progress.parentElement.classList.add("visually-hidden");
+        systemStateText.innerHTML = "Powered OFF";
+
+        console.log("power off");
+        
+    }
+    else if(state.power_on_status == 1) // power on
     {
         enableButtons(true);
         enablePowerBtn(true);
@@ -165,43 +177,7 @@ function updateSystemState(state)
 
         console.log("power on");
     }
-    else if(state.power_on_status == 0) // power off
-    {
-        enableButtons(false);
-        enablePowerBtn(true);
-
-        // systemStateSpinner.classList.add("visually-hidden");
-        system_state_progress.parentElement.classList.add("visually-hidden");
-        systemStateText.innerHTML = "Powered OFF";
-
-        console.log("power off");
-    }
-    else if(state.power_on_status == 1) // initializing system
-    {
-        enableButtons(false);
-        enablePowerBtn(false);
-
-        // systemStateSpinner.classList.remove("visually-hidden");
-        systemStateText.innerHTML = "Initializing System...";
-        system_state_progress.parentElement.classList.remove("visually-hidden");
-        // system_state_progress.getAttribute("aria-valuenow") = 25;
-
-        console.log("Initializing System...");
-    }
-    else if(state.power_on_status == 2) // harware check
-    {
-        enableButtons(false);
-        enablePowerBtn(false);
-
-        // systemStateSpinner.classList.remove("visually-hidden");
-        systemStateText.textContent = "Hardware check...";
-
-        system_state_progress.parentElement.classList.remove("visually-hidden");
-        // system_state_progress.getAttribute("aria-valuenow") = 50;
-
-        console.log("Hardware check...");
-    }
-    else // In execution
+    else if(state.power_on_status == 2) // execution
     {
         enableButtons(false);
         enablePowerBtn(false);
@@ -210,6 +186,59 @@ function updateSystemState(state)
 
         console.log("Executing...");
     }
+    else if(state.power_on_status == 3) // power off
+    {
+        enableButtons(false);
+        enablePowerBtn(false);
+
+        // systemStateSpinner.classList.add("visually-hidden");
+        systemStateSpinner.classList.remove("visually-hidden");
+        systemStateText.innerHTML = "Recovering...";
+
+        console.log("power off");
+    }
+    else // In execution
+    {
+        enableButtons(false);
+        enablePowerBtn(false);
+        systemStateSpinner.classList.remove("visually-hidden");
+        systemStateText.textContent = "Error";
+
+        console.log("Error...");
+    }
+
+
+    // if(state.power_on_status == 1) // power on
+    // {
+    //     enableButtons(true);
+    //     enablePowerBtn(true);
+    //     powerBtn.checked = true;
+    //     // systemStateSpinner.classList.add("visually-hidden");
+    //     system_state_progress.parentElement.classList.add("visually-hidden");
+    //     systemStateText.innerHTML = "Ready";
+
+    //     console.log("power on");
+    // }
+    // else if(state.power_on_status == 0) // power off
+    // {
+    //     enableButtons(false);
+    //     enablePowerBtn(true);
+
+    //     // systemStateSpinner.classList.add("visually-hidden");
+    //     system_state_progress.parentElement.classList.add("visually-hidden");
+    //     systemStateText.innerHTML = "Powered OFF";
+
+    //     console.log("power off");
+    // }
+    // else // In execution
+    // {
+    //     enableButtons(false);
+    //     enablePowerBtn(false);
+    //     systemStateSpinner.classList.remove("visually-hidden");
+    //     systemStateText.textContent = "Executing...";
+
+    //     console.log("Executing...");
+    // }
     prev_state = state.power_on_status;
 }
 

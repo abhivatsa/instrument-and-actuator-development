@@ -118,9 +118,10 @@ void InstrumentMotionPlanner::initializeSharedData()
     forceDataPtr->setZero();
 }
 
-int InstrumentMotionPlanner::write_to_drive(double joint_pos[4])
+int InstrumentMotionPlanner::write_to_drive(double joint_pos[NUM_JOINTS])
 {
-    for (unsigned int jnt_ctr = 0; jnt_ctr < 4; jnt_ctr++)
+    std::cout<<"writing data to drives"<<std::endl;
+    for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
         appDataPtr->target_position[jnt_ctr] = joint_pos[jnt_ctr];
     }

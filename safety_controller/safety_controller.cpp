@@ -133,15 +133,28 @@ void SafetyController::read_data()
 
 void SafetyController::write_data()
 {
+    std::cout<<"appDataPtr->target_position "<<0<<" : "<<appDataPtr->target_position[0]<<std::endl;
+    std::cout<<"jointDataPtr->target_position[0] "<<0<<" : "<<conv_to_target_pos(appDataPtr->target_position[0], 0)<<std::endl;
+
 
     if (!systemStateDataPtr->trigger_error_mode && systemStateDataPtr->status_operation_enabled)
     {
+        // systemStateDataPtr->drive_operation_mode = appDataPtr->drive_operation_mode;
+        // for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
+        // {
+        //     jointDataPtr->target_position[jnt_ctr] = conv_to_target_pos(appDataPtr->target_position[jnt_ctr], jnt_ctr);
+        //     jointDataPtr->target_velocity[jnt_ctr] = conv_to_target_velocity(appDataPtr->target_velocity[jnt_ctr], jnt_ctr);
+        //     jointDataPtr->target_torque[jnt_ctr] = conv_to_target_torque(appDataPtr->target_torque[jnt_ctr], jnt_ctr);
+        // }
+
         systemStateDataPtr->drive_operation_mode = appDataPtr->drive_operation_mode;
         for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
         {
-            jointDataPtr->target_position[jnt_ctr] = conv_to_target_pos(appDataPtr->target_position[jnt_ctr], jnt_ctr);
-            jointDataPtr->target_velocity[jnt_ctr] = conv_to_target_velocity(appDataPtr->target_velocity[jnt_ctr], jnt_ctr);
-            jointDataPtr->target_torque[jnt_ctr] = conv_to_target_torque(appDataPtr->target_torque[jnt_ctr], jnt_ctr);
+            std::cout<<"appDataPtr->target_position "<<jnt_ctr<<" : "<<appDataPtr->target_position[jnt_ctr]<<std::endl;
+            std::cout<<"jointDataPtr->target_position[jnt_ctr] "<<jnt_ctr<<" : "<<conv_to_target_pos(appDataPtr->target_position[jnt_ctr], jnt_ctr)<<std::endl;
+            // jointDataPtr->target_position[jnt_ctr] = conv_to_target_pos(appDataPtr->target_position[jnt_ctr], jnt_ctr);
+            // jointDataPtr->target_velocity[jnt_ctr] = conv_to_target_velocity(appDataPtr->target_velocity[jnt_ctr], jnt_ctr);
+            // jointDataPtr->target_torque[jnt_ctr] = conv_to_target_torque(appDataPtr->target_torque[jnt_ctr], jnt_ctr);
         }
     }
 }

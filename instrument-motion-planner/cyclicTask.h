@@ -42,6 +42,7 @@ void InstrumentMotionPlanner::do_rt_task()
     switch (systemDataPtr->getSystemState())
     {
     case SystemState::POWER_OFF:
+        // std::cout<<"sys state powered on \n";
         if (systemDataPtr->request == 1)
         {
             appDataPtr->initialize_system = true;
@@ -60,6 +61,7 @@ void InstrumentMotionPlanner::do_rt_task()
         }
         break;
     case SystemState::READY:
+        // std::cout<<"sys state ready \n";
         appDataPtr->switch_to_operation = true;
         if (appDataPtr->operation_enable_status)
         {
@@ -70,6 +72,7 @@ void InstrumentMotionPlanner::do_rt_task()
         }
         break;
     case SystemState::IN_EXECUTION:
+        // std::cout<<"sys state powered in execution \n";
         if (commandDataPtr->type == CommandType::JOG)
         {
             Jog();
@@ -80,10 +83,13 @@ void InstrumentMotionPlanner::do_rt_task()
         else
         {
         }
+        systemDataPtr->setSystemState(SystemState::READY);
         break;
     case SystemState::RECOVERY:
+        // std::cout<<"sys state in recovery \n";
         break;
     case SystemState::ERROR:
+        // std::cout<<"sys state error \n";
         appDataPtr->trigger_error = false;
         if (appDataPtr->reset_error)
         {

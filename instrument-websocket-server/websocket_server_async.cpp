@@ -42,11 +42,8 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-constexpr int NUM_JOINTS = 4; // Change this to the desired number of joints
-
-
 // structer for system data
-enum class SystemState
+enum SystemState
 {
     POWER_OFF,
     READY,
@@ -55,24 +52,13 @@ enum class SystemState
     ERROR
 };
 
-enum class ActuatorState
-{
-    NONE,
-    STERILE_MOUNTED,
-    STERILE_ENGAGED,
-    INSTRUMENT_MOUNTED,
-    INSTRUMENT_ENGAGED
-};
-
-enum class CommandType
-{
+enum CommandType{
     NONE,
     JOG,
     HAND_CONTROL,
 };
 
-enum class OperationModeState
-{
+enum OperationModeState{
     POSITION_MODE = 8,
     VELOCITY_MODE = 9,
     TORQUE_MODE = 10,
@@ -82,79 +68,43 @@ enum class OperationModeState
 struct SystemData
 {
     SystemState getSystemState() const { return system_state; }
-    void setSystemState(SystemState state) { previous_state = system_state; system_state = state; }
-    ActuatorState getActuatorState() const { return actuator_state; }
-    void setActuatorState(ActuatorState state) {actuator_state = state; }
+    void setSystemState(SystemState state) { system_state = state; }
     void powerOn() { request = system_state == SystemState::POWER_OFF ? 1 : 0; }
     void powerOff() { request = system_state == SystemState::READY ? -1 : 0; }
-
-    void resetError(){ 
-        if(previous_state == SystemState::IN_EXECUTION)
-            previous_state = SystemState::READY;
-        system_state = previous_state; 
-        }
     int request = 0;
 
 private:
     SystemState system_state = SystemState::POWER_OFF;
-    SystemState previous_state = SystemState::POWER_OFF;
-    ActuatorState actuator_state = ActuatorState::NONE;
 };
 
 struct AppData
 {
     void setZero()
     {
-        // Initialize boolean flags
-        switch_to_operation = false;
-        initialize_drives = false;
-        initialize_system = false;
-        trigger_error = false;
-        safety_process_status = false;
-        drive_initialized = false;
-        safety_check_done = false;
-        reset_error = false;
-        operation_enable_status = false;
-
-        // Use std::fill_n for array initialization
-        std::fill_n(actual_position, NUM_JOINTS, 0.0);
-        std::fill_n(actual_velocity, NUM_JOINTS, 0.0);
-        std::fill_n(actual_torque, NUM_JOINTS, 0.0);
-        std::fill_n(cart_pos, NUM_JOINTS, 0.0);
-        std::fill_n(target_position, NUM_JOINTS, 0.0);
-        std::fill_n(target_velocity, NUM_JOINTS, 0.0);
-        std::fill_n(target_torque, NUM_JOINTS, 0.0);
-
-        // Initialize other members
-        drive_operation_mode = OperationModeState::POSITION_MODE;
-        switched_on = false;
-        sterile_detection = false;
-        instrument_detection = false;
-        simulation_mode = false;
+        for (int jnt_ctr = 0; jnt_ctr < 4; jnt_ctr++)
+        {
+            actual_position[jnt_ctr] = 0;
+            actual_velocity[jnt_ctr] = 0;
+            actual_torque[jnt_ctr] = 0;
+            cart_pos[3] = 0;
+            target_position[jnt_ctr] = 0;
+            target_velocity[jnt_ctr] = 0;
+            target_torque[jnt_ctr] = 0;
+            drive_operation_mode = OperationModeState::POSITION_MODE;
+            switched_on = false;
+        }
     }
 
-    double actual_position[NUM_JOINTS];
-    double actual_velocity[NUM_JOINTS];
-    double actual_torque[NUM_JOINTS];
-    double cart_pos[NUM_JOINTS];
-    double target_position[NUM_JOINTS];
-    double target_velocity[NUM_JOINTS];
-    double target_torque[NUM_JOINTS];
+    double actual_position[4];
+    double actual_velocity[4];
+    double actual_torque[4];
+    double cart_pos[3];
+    double target_position[4];
+    double target_velocity[4];
+    double target_torque[4];
     OperationModeState drive_operation_mode;
     bool switched_on;
-    bool sterile_detection;
-    bool instrument_detection;
-    bool simulation_mode;
 
-    bool trigger_error;
-    bool safety_process_status;
-    bool initialize_system;
-    bool initialize_drives;
-    bool drive_initialized;
-    bool switch_to_operation;
-    bool safety_check_done;
-    bool operation_enable_status;
-    bool reset_error;
 };
 
 struct CommandData
@@ -184,7 +134,7 @@ struct CommandData
     struct
     {
         int type;
-        double goal_position[3];
+        double goal_position[4];
     } move_to_data;
 };
 
@@ -192,9 +142,9 @@ struct CommandData
 // int* ptr2;
 double *ptrSimRobot;
 
-SystemData *system_data_ptr;
-AppData *app_data_ptr;
-CommandData *commmand_data_ptr;
+SystemData *systemDataPtr;
+AppData *appDataPtr;
+CommandData *commandDataPtr;
 
 // -------------- Inconming data Parser --------------------
 class ParseData
@@ -243,11 +193,11 @@ private:
         if (system_data["power_on"].GetBool())
         {
             //
-            system_data_ptr->powerOn();
+            systemDataPtr->powerOn();
         }
         else
         {
-            system_data_ptr->powerOff();
+            systemDataPtr->powerOff();
         }
     }
 
@@ -262,14 +212,14 @@ private:
             int mode = command_data["mode"].GetInt();
             int index = command_data["index"].GetInt();
             int dir = command_data["direction"].GetInt();
-            commmand_data_ptr->setJog(index, dir, mode);
+            commandDataPtr->setJog(index, dir, mode);
             break;
         }
         case CommandType::HAND_CONTROL:
         {
 
             std::cout << "Hand Control command\n";
-            commmand_data_ptr->setHandControl();
+            commandDataPtr->setHandControl();
             break;
         }
         default:
@@ -310,15 +260,15 @@ private:
         for (rapidjson::SizeType jnt_cnt = 0; jnt_cnt < 6; jnt_cnt++)
         {
             std::string name = "joint" + std::to_string(jnt_cnt + 1);
-            position[name.c_str()] = app_data_ptr->actual_position[jnt_cnt];
-            velocity[name.c_str()] = app_data_ptr->actual_velocity[jnt_cnt];
-            torque[name.c_str()] = app_data_ptr->actual_torque[jnt_cnt];
+            position[name.c_str()] = appDataPtr->actual_position[jnt_cnt];
+            velocity[name.c_str()] = appDataPtr->actual_velocity[jnt_cnt];
+            torque[name.c_str()] = appDataPtr->actual_torque[jnt_cnt];
         }
     }
 
     void setSystemState(rapidjson::Value &document)
     {
-        document["power_on_status"] = system_data_ptr->getSystemState();
+        document["power_on_status"] = systemDataPtr->getSystemState();
     }
 };
 
@@ -583,26 +533,6 @@ private:
     }
 };
 
-void configureSharedMemory()
-{
-    int shm_fd_systemData;
-    int shm_fd_appData;
-    int shm_fd_commandData;
-    int shm_fd_forceDimData;
-
-    createSharedMemory(shm_fd_systemData, "SystemData", sizeof(SystemData));
-    createSharedMemory(shm_fd_appData, "AppData", sizeof(AppData));
-    createSharedMemory(shm_fd_commandData, "CommandData", sizeof(CommandData));
-    createSharedMemory(shm_fd_forceDimData, "ForceDimData", sizeof(ForceDimData));
-
-    mapSharedMemory((void *&)systemDataPtr, shm_fd_systemData, sizeof(SystemData));
-    mapSharedMemory((void *&)appDataPtr, shm_fd_appData, sizeof(AppData));
-    mapSharedMemory((void *&)commandDataPtr, shm_fd_commandData, sizeof(CommandData));
-    mapSharedMemory((void *&)forceDataPtr, shm_fd_forceDimData, sizeof(ForceDimData));
-
-    initializeSharedData();
-}
-
 void createSharedMemory(int &shm_fd, const char *name, int size)
 {
     shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
@@ -624,17 +554,31 @@ void mapSharedMemory(void *&ptr, int shm_fd, int size)
 
 void initializeSharedData()
 {
-    // systemDataPtr->setZero();
     appDataPtr->setZero();
-    // commandDataPtr->setZero();
     systemDataPtr->setSystemState(SystemState::POWER_OFF);
     systemDataPtr->request = 0;
-    appDataPtr->setZero();
     commandDataPtr->type = CommandType::NONE;
-    forceDataPtr->setZero();
+}
+
+void configureSharedMemory()
+{
+    int shm_fd_systemData;
+    int shm_fd_appData;
+    int shm_fd_commandData;
+
+    createSharedMemory(shm_fd_systemData, "SystemData", sizeof(SystemData));
+    createSharedMemory(shm_fd_appData, "AppData", sizeof(AppData));
+    createSharedMemory(shm_fd_commandData, "CommandData", sizeof(CommandData));
+
+    mapSharedMemory((void *&)systemDataPtr, shm_fd_systemData, sizeof(SystemData));
+    mapSharedMemory((void *&)appDataPtr, shm_fd_appData, sizeof(AppData));
+    mapSharedMemory((void *&)commandDataPtr, shm_fd_commandData, sizeof(CommandData));
+
+    initializeSharedData();
 }
 
 //------------------------------------------------------------------------------
+
 int main(int argc, char *argv[])
 {
     // Check command line arguments.
@@ -646,32 +590,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    /* the size (in bytes) of shared memory object */
-    const int SIZE_SimDATA = sizeof(SystemData);
-    const int SIZE_AppData = sizeof(AppData);
-    const int SIZE_ComData = sizeof(CommandData);
-
-    /* shared memory file descriptor */
-    double shm_fd_SysData;
-    double shm_fd_AppData;
-    double shm_fd_ComData;
-
-    /* open the shared memory object */
-    shm_fd_SysData = shm_open("SystemData", O_CREAT | O_RDWR, 0666);
-    shm_fd_AppData = shm_open("AppData", O_CREAT | O_RDWR, 0666);
-    shm_fd_ComData = shm_open("CommandData", O_CREAT | O_RDWR, 0666);
-
-    ftruncate(shm_fd_SysData, SIZE_SimDATA);
-    ftruncate(shm_fd_AppData, SIZE_AppData);
-    ftruncate(shm_fd_ComData, SIZE_ComData);
-
-    /* memory map the shared memory object */
-    system_data_ptr = static_cast<SystemData *>(mmap(0, SIZE_SimDATA, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_SysData, 0));
-    app_data_ptr = static_cast<AppData *>(mmap(0, SIZE_AppData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_AppData, 0));
-    commmand_data_ptr = static_cast<CommandData *>(mmap(0, SIZE_ComData, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_ComData, 0));
-
-    app_data_ptr->setZero();
-    commmand_data_ptr->type = CommandType::NONE;
+    configureSharedMemory();
 
     auto const address = net::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
