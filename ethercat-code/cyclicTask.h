@@ -181,6 +181,8 @@ void EthercatMaster::handleOperationEnabledState()
     {
         read_data();
 
+        systemStateDataPtr->status_operation_enabled = true;
+
         jointDataPtr->sterile_detection_status = true;
         jointDataPtr->instrument_detection_status = true;
 
