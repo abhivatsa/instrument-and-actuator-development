@@ -150,9 +150,9 @@ void SafetyController::wait_rest_of_period(struct period_info *pinfo)
 bool SafetyController::check_limits()
 {
 
-    joint_pos_limit_check();
-    joint_vel_limit_check();
-    joint_torq_limit_check();
+    // joint_pos_limit_check();
+    // joint_vel_limit_check();
+    // joint_torq_limit_check();
 
     return !systemStateDataPtr->trigger_error_mode;
 }

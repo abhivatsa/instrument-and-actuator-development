@@ -12,7 +12,7 @@ double InstrumentMotionPlanner::jog(int index, int dir, int type)
         double command_pos[NUM_JOINTS];
         double command_vel[NUM_JOINTS] = {0, 0, 0, 0};
         std::copy(std::begin(appDataPtr->actual_position), std::end(appDataPtr->actual_position), std::begin(command_pos));
-        command_pos[index] = appDataPtr->actual_position[index] + dir * 0.001;
+        command_pos[index] = appDataPtr->actual_position[index] + dir * 0.01;
         std::cout<<"command_pos : "<<index<<" : "<<command_pos[index]<<std::endl;
         write_to_drive(command_pos);
     }
