@@ -1,17 +1,18 @@
 #pragma once
 
 #include "instrument_jog.h"
+#include "sterile_engagement.h"
 
 void InstrumentMotionPlanner::cyclicTask()
 {
-    struct period_info pinfo;
+    // struct period_info pinfo;
 
-    periodic_task_init(&pinfo);
+    // periodic_task_init(&pinfo);
 
     while (!exitFlag)
     {
         do_rt_task();
-        wait_rest_of_period(&pinfo);
+        // wait_rest_of_period(&pinfo);
     }
 }
 
@@ -79,6 +80,7 @@ void InstrumentMotionPlanner::do_rt_task()
         }
         else if (commandDataPtr->type == CommandType::HAND_CONTROL)
         {
+            sterile_engagement();
         }
         else
         {
@@ -99,6 +101,9 @@ void InstrumentMotionPlanner::do_rt_task()
     default:
         break;
     }
+
+    usleep(1000);
+
 }
 
 void InstrumentMotionPlanner::wait_rest_of_period(struct period_info *pinfo)

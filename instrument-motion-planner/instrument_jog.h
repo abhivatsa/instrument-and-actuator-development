@@ -4,8 +4,6 @@
 
 double InstrumentMotionPlanner::jog(int index, int dir, int type)
 {
-    std::cout<<"inside Jog "<<std::endl;
-    std::cout<<"index : "<<index<<", dir : "<<dir<<", type : "<<type<<", bool chk  : "<<(type == 0)<<std::endl;
     if (type == 0) // joint space
     {
         /* code */
@@ -13,7 +11,6 @@ double InstrumentMotionPlanner::jog(int index, int dir, int type)
         double command_vel[NUM_JOINTS] = {0, 0, 0, 0};
         std::copy(std::begin(appDataPtr->actual_position), std::end(appDataPtr->actual_position), std::begin(command_pos));
         command_pos[index] = appDataPtr->actual_position[index] + dir * 0.01;
-        std::cout<<"command_pos : "<<index<<" : "<<command_pos[index]<<std::endl;
         write_to_drive(command_pos);
     }
     else if (type == 1)// task space
@@ -118,7 +115,16 @@ void InstrumentMotionPlanner::Jog()
 {
     appDataPtr->drive_operation_mode = OperationModeState::POSITION_MODE;
 
-    std::cout<<"about to call jog"<<std::endl;
+    // if (commandDataPtr->jog_data.type == 0 && appDataPtr->trigger_error == false)
+    // {
+    //     jog(commandDataPtr->jog_data.index, commandDataPtr->jog_data.dir, 0);
+    // }
+
+    // if (commandDataPtr->jog_data.type == 1 && appDataPtr->trigger_error == false)
+    // {
+    //     jog(commandDataPtr->jog_data.index, commandDataPtr->jog_data.dir, 1);
+    // }
+
     while (commandDataPtr->jog_data.type == 0)
     {
         jog(commandDataPtr->jog_data.index, commandDataPtr->jog_data.dir, 0);

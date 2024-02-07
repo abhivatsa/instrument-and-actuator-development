@@ -178,7 +178,7 @@ public:
             {
                 std::cerr << e.what() << '\n';
             }
-            std::cout << "data read\n";
+            // std::cout << "data read\n";
         }
     }
 
@@ -208,7 +208,7 @@ private:
         {
         case CommandType::JOG:
         {
-            std::cout << "jog command\n";
+            // std::cout << "jog command\n";
             int mode = command_data["mode"].GetInt();
             int index = command_data["index"].GetInt();
             int dir = command_data["direction"].GetInt();
@@ -218,7 +218,7 @@ private:
         case CommandType::HAND_CONTROL:
         {
 
-            std::cout << "Hand Control command\n";
+            // std::cout << "Hand Control command\n";
             commandDataPtr->setHandControl();
             break;
         }
@@ -417,7 +417,7 @@ public:
         // std::cout<<"buffer_ "<<beast::buffers_to_string(buffer_.data())<<std::endl;
 
         std::string rec_string = beast::buffers_to_string(buffer_.data());
-        std::cout << "data :" << rec_string << "\n";
+        // std::cout << "data :" << rec_string << "\n";
         data_incoming_.Parse<0>(rec_string.c_str()).HasParseError();
 
         data_parser_.parse(data_incoming_);

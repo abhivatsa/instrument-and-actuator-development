@@ -19,7 +19,7 @@ int main()
         sleep(1);
     }
 
-    commandDataPtr->setNone();
+    commandDataPtr->setHandControl();
 
 }
 

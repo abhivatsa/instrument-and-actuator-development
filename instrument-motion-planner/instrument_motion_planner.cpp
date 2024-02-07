@@ -120,7 +120,6 @@ void InstrumentMotionPlanner::initializeSharedData()
 
 int InstrumentMotionPlanner::write_to_drive(double joint_pos[NUM_JOINTS])
 {
-    std::cout<<"writing data to drives"<<std::endl;
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
         appDataPtr->target_position[jnt_ctr] = joint_pos[jnt_ctr];

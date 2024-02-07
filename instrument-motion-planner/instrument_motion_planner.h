@@ -37,6 +37,7 @@ private:
     // int pt_to_pt_mvmt(double ini_pos[NUM_JOINTS], double final_pos[NUM_JOINTS]);
     double jog(int index, int dir, int type);
     void Jog();
+    double sterile_engagement();
     int write_to_drive(double joint_pos[4]);
     void configureSharedMemory();
     void createSharedMemory(int &shm_fd, const char *name, int size);
