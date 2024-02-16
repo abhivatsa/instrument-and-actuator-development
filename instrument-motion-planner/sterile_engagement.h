@@ -10,7 +10,7 @@ double InstrumentMotionPlanner::sterile_engagement()
     for (unsigned int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++)
     {
         ini_pos[jnt_ctr] = appDataPtr->actual_position[jnt_ctr];
-        final_pos[jnt_ctr] = ini_pos[jnt_ctr] + (2 * M_PI + 0.02);
+        final_pos[jnt_ctr] = ini_pos[jnt_ctr] + (4 * M_PI + 0.02);
     }
 
     bool start_homing = true;
@@ -29,16 +29,16 @@ double InstrumentMotionPlanner::sterile_engagement()
 
         for (int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++){
 
-            std::cout<<"do_home["<<jnt_ctr<<"]"<<do_home[jnt_ctr]<<std::endl;
+            // std::cout<<"do_home["<<jnt_ctr<<"]"<<do_home[jnt_ctr]<<std::endl;
 
             if (do_home[jnt_ctr]){
-                command_pos[jnt_ctr] = command_pos[jnt_ctr] + 0.005;
+                command_pos[jnt_ctr] = command_pos[jnt_ctr] + 0.001;
             }
             else{
                 command_pos[jnt_ctr] = appDataPtr->actual_position[jnt_ctr];
             }
 
-            if ( fabs(command_pos[jnt_ctr] - appDataPtr->actual_position[jnt_ctr]) > 1.5){
+            if ( fabs(command_pos[jnt_ctr] - appDataPtr->actual_position[jnt_ctr]) > 0.5 || (command_pos[jnt_ctr] > final_pos[jnt_ctr])){
                 do_home[jnt_ctr] = false;
             }
 
@@ -56,7 +56,7 @@ double InstrumentMotionPlanner::sterile_engagement()
 
         write_to_drive(command_pos);
 
-        std::cout<<"start_homing : "<<start_homing<<", !exitFlag : "<<(!exitFlag)<<", homing_ctr : "<<homing_ctr<<std::endl;
+        // std::cout<<"start_homing : "<<start_homing<<", !exitFlag : "<<(!exitFlag)<<", homing_ctr : "<<homing_ctr<<std::endl;
 
         usleep(1000);
 

@@ -44,8 +44,9 @@ EthercatMaster::EthercatMaster()
         ec_slave_config_t *sc;
 
         std::cout<<"configuring joint jnt_ctr : "<<jnt_ctr<<std::endl;
+        uint16_t index_ctr = jnt_ctr+1;
 
-        if (!(sc = ecrt_master_slave_config(master, 0, jnt_ctr, ingeniaDenalliXcr)))
+        if (!(sc = ecrt_master_slave_config(master, 0, index_ctr, ingeniaDenalliXcr)))
         {
             fprintf(stderr, "Failed to get slave configuration.\n");
             return;
@@ -55,20 +56,20 @@ EthercatMaster::EthercatMaster()
 
         ec_pdo_entry_reg_t domain_regs[] = {
 
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6041, 0, &driveOffset[jnt_ctr].statusword},                // 6041 0 statusword
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6061, 0, &driveOffset[jnt_ctr].mode_of_operation_display}, // 6061 0 mode_of_operation_display
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6064, 0, &driveOffset[jnt_ctr].position_actual_value},     // 6064 0 pos_act_val
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x606C, 0, &driveOffset[jnt_ctr].velocity_actual_value},     // 606C 0 vel_act_val
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6077, 0, &driveOffset[jnt_ctr].torque_actual_value},       // 6077 0 torq_act_val check this
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x2600, 0, &driveOffset[jnt_ctr].digital_input_value},       // 60FD 0 digital_input_value check this
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x603F, 0, &driveOffset[jnt_ctr].error_code},                // 603F 0 digital_input_value
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6040, 0, &driveOffset[jnt_ctr].controlword},               // 6040 0 control word
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6060, 0, &driveOffset[jnt_ctr].modes_of_operation},        // 6060 0 mode_of_operation
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x6071, 0, &driveOffset[jnt_ctr].target_torque},             // 6071 0 target torque
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x607A, 0, &driveOffset[jnt_ctr].target_position},           // 607A 0 target position
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x60FF, 0, &driveOffset[jnt_ctr].target_velocity},           // 60FF 0 target velocity
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x60B2, 0, &driveOffset[jnt_ctr].torque_offset},
-            {0, jnt_ctr, ingeniaDenalliXcr, 0x60B1, 0, &driveOffset[jnt_ctr].velocity_offset}, // 60B2 0 torque offset
+            {0, index_ctr, ingeniaDenalliXcr, 0x6041, 0, &driveOffset[jnt_ctr].statusword},                // 6041 0 statusword
+            {0, index_ctr, ingeniaDenalliXcr, 0x6061, 0, &driveOffset[jnt_ctr].mode_of_operation_display}, // 6061 0 mode_of_operation_display
+            {0, index_ctr, ingeniaDenalliXcr, 0x6064, 0, &driveOffset[jnt_ctr].position_actual_value},     // 6064 0 pos_act_val
+            {0, index_ctr, ingeniaDenalliXcr, 0x606C, 0, &driveOffset[jnt_ctr].velocity_actual_value},     // 606C 0 vel_act_val
+            {0, index_ctr, ingeniaDenalliXcr, 0x6077, 0, &driveOffset[jnt_ctr].torque_actual_value},       // 6077 0 torq_act_val check this
+            {0, index_ctr, ingeniaDenalliXcr, 0x2600, 0, &driveOffset[jnt_ctr].digital_input_value},       // 60FD 0 digital_input_value check this
+            {0, index_ctr, ingeniaDenalliXcr, 0x603F, 0, &driveOffset[jnt_ctr].error_code},                // 603F 0 digital_input_value
+            {0, index_ctr, ingeniaDenalliXcr, 0x6040, 0, &driveOffset[jnt_ctr].controlword},               // 6040 0 control word
+            {0, index_ctr, ingeniaDenalliXcr, 0x6060, 0, &driveOffset[jnt_ctr].modes_of_operation},        // 6060 0 mode_of_operation
+            {0, index_ctr, ingeniaDenalliXcr, 0x6071, 0, &driveOffset[jnt_ctr].target_torque},             // 6071 0 target torque
+            {0, index_ctr, ingeniaDenalliXcr, 0x607A, 0, &driveOffset[jnt_ctr].target_position},           // 607A 0 target position
+            {0, index_ctr, ingeniaDenalliXcr, 0x60FF, 0, &driveOffset[jnt_ctr].target_velocity},           // 60FF 0 target velocity
+            {0, index_ctr, ingeniaDenalliXcr, 0x60B2, 0, &driveOffset[jnt_ctr].torque_offset},
+            {0, index_ctr, ingeniaDenalliXcr, 0x60B1, 0, &driveOffset[jnt_ctr].velocity_offset}, // 60B2 0 torque offset
             {}};
 
         // ecrt_slave_config_dc(sc, 0x0300, 1000000, 0, 0, 0);
