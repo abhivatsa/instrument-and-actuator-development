@@ -32,25 +32,26 @@ make all modules
 
 ... and as root:
 
-# make modules_install install
-# depmod
-
+```bash
+make modules_install install
+depmod
+```
 ... and then customizing the appropriate configuration file:
 
-# vi /etc/ethercat.conf      # For systemd based distro
-# vi /etc/sysconfig/ethercat # For init.d based distro
-
+```
+nano /etc/sysconfig/ethercat # For init.d based distro
+```
 Make sure, that the 'udev' package is installed, to automatically create the
 EtherCAT character devices. The character devices will be created with mode
 0660 and group root by default. If you want to give normal users reading
 access, create a udev rule like this:
-
-# echo KERNEL==\"EtherCAT[0-9]*\", MODE=\"0664\" > /etc/udev/rules.d/99-EtherCAT.rules
-
+```
+echo KERNEL==\"EtherCAT[0-9]*\", MODE=\"0664\" > /etc/udev/rules.d/99-EtherCAT.rules
+```
 Now you can start the EtherCAT master:
 
-# systemctl start ethercat   # For systemd based distro
-# /etc/init.d/ethercat start # For init.d based distro
-
+```
+/etc/init.d/ethercat start # For init.d based distro
+```
 Have a look at the examples/ subdirectory for some application examples.
 
