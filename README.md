@@ -9,49 +9,48 @@ Before installing EtherCAT, make sure you have the following prerequisites insta
 - `autoconf`
 - `libtool`
 - `build-essential`
-- `pkg-config`
-- `cmake`
-- `libeigen3-dev`
 
 You can install these prerequisites by running the following commands:
 
 ```bash
-sudo apt-get install autoconf -y
-sudo apt-get install libtool -y
-sudo apt-get install build-essential -y
-sudo apt-get install pkg-config -y
-sudo apt  install cmake -y
-sudo apt install libeigen3-dev -y
+sudo apt-get install autoconf
+sudo apt-get install libtool
+sudo apt-get install build-essential
 ```
-```bash
-./bootstrap # to create the configure script, if downloaded from the repo
+# EtherCAT Configuration and Build Guide
 
-./configure --enable-sii-assign --enable-hrtimer --enable-cycles --disable-eoe --disable-8139too --sysconfdir=/etc
-make all modules
-```
+Follow these steps to configure and build EtherCAT on your system:
 
-... and as root:
+1. Run the bootstrap script:
 
-```bash
-make modules_install install
-depmod
-```
-... and then customizing the appropriate configuration file:
+    ```bash
+    ./bootstrap
+    ```
 
-```
-nano /etc/sysconfig/ethercat # For init.d based distro
-```
-Make sure, that the 'udev' package is installed, to automatically create the
-EtherCAT character devices. The character devices will be created with mode
-0660 and group root by default. If you want to give normal users reading
-access, create a udev rule like this:
-```
-echo KERNEL==\"EtherCAT[0-9]*\", MODE=\"0664\" > /etc/udev/rules.d/99-EtherCAT.rules
-```
-Now you can start the EtherCAT master:
+2. Check available configuration options:
 
-```
-/etc/init.d/ethercat start # For init.d based distro
-```
-Have a look at the examples/ subdirectory for some application examples.
+    ```bash
+    ./configure --help
+    ```
+
+3. Configure EtherCAT with the desired options. For example:
+
+    ```bash
+    ./configure --enable-sii-assign --enable-hrtimer --enable-cycles --disable-eoe --disable-8139too --sysconfdir=/etc
+    ```
+
+   Make sure to adjust the configuration options based on your specific requirements.
+
+4. Build all modules:
+
+    ```bash
+    make all modules
+    ```
+
+   This command will compile and build all EtherCAT modules.
+
+Please note that these instructions assume a Unix-like environment. Adjust the commands accordingly if you are using a different operating system or shell.
+
+For additional information and troubleshooting, refer to the EtherCAT documentation or community forums.
+
 

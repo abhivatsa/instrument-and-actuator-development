@@ -23,44 +23,162 @@ double InstrumentMotionPlanner::sterile_engagement()
 
     while (start_homing && !exitFlag){
 
-        sterile_time = sterile_time + 0.001;
+        double total_movement = M_PI/3;
+        double total_time = 300;
+        double time = 0;
 
-        int homing_ctr = 0;
+        // pitch movement
 
-        for (int jnt_ctr = 0; jnt_ctr < NUM_JOINTS; jnt_ctr++){
-
-            // std::cout<<"do_home["<<jnt_ctr<<"]"<<do_home[jnt_ctr]<<std::endl;
-
-            if (do_home[jnt_ctr]){
-                command_pos[jnt_ctr] = command_pos[jnt_ctr] + 0.001;
-            }
-            else{
-                command_pos[jnt_ctr] = appDataPtr->actual_position[jnt_ctr];
-            }
-
-            if ( fabs(command_pos[jnt_ctr] - appDataPtr->actual_position[jnt_ctr]) > 0.5 || (command_pos[jnt_ctr] > final_pos[jnt_ctr])){
-                do_home[jnt_ctr] = false;
-            }
-
-            if (do_home[jnt_ctr] == false){
-                homing_ctr++;
-            }
-
-            std::cout<<"do_home["<<jnt_ctr<<"]"<<do_home[jnt_ctr]<<", command_pos: "<<command_pos[jnt_ctr]<<", actual_pos : "<<appDataPtr->actual_position[jnt_ctr]<<std::endl;
-            
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0] + total_movement/total_time*time;
+            final_pos[1] = ini_pos[1] - 0.7 * total_movement/total_time*time;
+            final_pos[2] = ini_pos[2] - 0.7 * total_movement/total_time*time;
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
         }
 
-        if (homing_ctr == NUM_JOINTS){
-            start_homing = false;
+        time = 0;
+        while (time < 2*total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0] + (total_movement - total_movement/total_time*time);
+            final_pos[1] = ini_pos[1] - 0.7 * (total_movement - total_movement/total_time*time);
+            final_pos[2] = ini_pos[2] - 0.7 * (total_movement - total_movement/total_time*time);
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
         }
 
-        write_to_drive(command_pos);
+        time = 0;
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0] + (-total_movement + total_movement/total_time*time);
+            final_pos[1] = ini_pos[1] - 0.7 * (-total_movement + total_movement/total_time*time);
+            final_pos[2] = ini_pos[2] - 0.7 * (-total_movement + total_movement/total_time*time);
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
 
-        // std::cout<<"start_homing : "<<start_homing<<", !exitFlag : "<<(!exitFlag)<<", homing_ctr : "<<homing_ctr<<std::endl;
+        usleep(100000);
 
+        // yaw movement
+
+        time = 0;
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1] + total_movement/total_time*time;
+            final_pos[2] = ini_pos[2] + total_movement/total_time*time;
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        time = 0;
+        while (time < 2*total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1] + (total_movement - total_movement/total_time*time);
+            final_pos[2] = ini_pos[2] + (total_movement - total_movement/total_time*time);
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        time = 0;
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1] + (-total_movement + total_movement/total_time*time);
+            final_pos[2] = ini_pos[2] + (-total_movement + total_movement/total_time*time);
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        usleep(100000);
+
+        // pinch movement
+
+        time = 0;
+
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1] + total_movement/total_time*time;
+            final_pos[2] = ini_pos[2] - total_movement/total_time*time;
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        time = 0;
+        while (time < 2*total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1] + (total_movement - total_movement/total_time*time);
+            final_pos[2] = ini_pos[2] - (total_movement - total_movement/total_time*time);
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        time = 0;
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1] + (-total_movement + total_movement/total_time*time);
+            final_pos[2] = ini_pos[2] - (-total_movement + total_movement/total_time*time);
+            final_pos[3] = ini_pos[3];
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        usleep(100000);
+
+        // roll movement
+
+        time = 0;
+
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1];
+            final_pos[2] = ini_pos[2];
+            final_pos[3] = ini_pos[3] + 3*total_movement/total_time*time;
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        time = 0;
+        while (time < 2*total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1];
+            final_pos[2] = ini_pos[2];
+            final_pos[3] = ini_pos[3] + 3*(total_movement - total_movement/total_time*time);
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+
+        time = 0;
+        while (time < total_time){
+            time = time + 1;
+            final_pos[0] = ini_pos[0];
+            final_pos[1] = ini_pos[1];
+            final_pos[2] = ini_pos[2];
+            final_pos[3] = ini_pos[3] + 3*(-total_movement + total_movement/total_time*time);
+            write_to_drive(final_pos);
+            usleep(1000);
+        }
+        
         usleep(1000);
 
     }
+
+    
 
     commandDataPtr->type = CommandType::NONE;
 

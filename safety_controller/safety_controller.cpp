@@ -202,7 +202,7 @@ int SafetyController::conv_to_target_torque(double torq_val, int jnt_ctr)
 double SafetyController::conv_to_actual_torque(int torq_val, int jnt_ctr)
 {
     // input torq in terms of per thousand of rated torque, Output is in N-m (SEE object 0x6077)
-    return (torq_val / 1000 * rated_torque[jnt_ctr] * gear_ratio[jnt_ctr]);
+    return (torq_val * rated_torque[jnt_ctr] * gear_ratio[jnt_ctr] / 1000);
 }
 
 

@@ -44,7 +44,7 @@ EthercatMaster::EthercatMaster()
         ec_slave_config_t *sc;
 
         std::cout<<"configuring joint jnt_ctr : "<<jnt_ctr<<std::endl;
-        uint16_t index_ctr = jnt_ctr+1;
+        uint16_t index_ctr = jnt_ctr;
 
         if (!(sc = ecrt_master_slave_config(master, 0, index_ctr, ingeniaDenalliXcr)))
         {

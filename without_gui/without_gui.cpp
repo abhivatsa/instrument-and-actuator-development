@@ -15,6 +15,8 @@ int main()
 
     systemDataPtr->request = 1;
 
+    std::cout<<"insuide without gui"<<std::endl;
+
     while (!(appDataPtr->operation_enable_status)){
         sleep(1);
     }
